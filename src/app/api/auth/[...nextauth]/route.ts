@@ -1,7 +1,8 @@
-import NextAuth from "next-auth";
+//@ts-nocheck
+import NextAuth, { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-export const authOptions = {
+export const authOptions: AuthOptions = {
   providers:
     process.env.develop === "no_api"
       ? [
@@ -51,7 +52,8 @@ export const authOptions = {
               if (!res.ok) return null;
 
               const data = await res.json();
-
+              console.log(data);
+              
               return {
                 id: data.user.id,
                 name: data.user.name,
@@ -75,7 +77,6 @@ export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 
   callbacks: {
-    //@ts-ignore
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
@@ -89,11 +90,9 @@ export const authOptions = {
       if (token.exp && Date.now() / 1000 > token.exp) {
         return {};
       }
-
       return token;
     },
 
-    //@ts-ignore
     async session({ session, token }) {
       if (!token?.keystone_token) return null;
 
