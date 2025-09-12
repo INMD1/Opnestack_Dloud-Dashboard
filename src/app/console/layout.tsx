@@ -6,7 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import ProfileChecker from "./exten/ProfileChecker";
+import ProfileChecker from "../exten/ProfileChecker";
 
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -41,7 +41,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <ProfileChecker />
             <AppSidebar />
             <div className=" grid-flow-col w-screen h-screen">
-                <div className="p-4 flex justify-between items-center ">
+                <div className="pl-10 pr-10 pt-10 flex justify-between items-center ">
                     <div className="text-lg">
                         {pathname()}
                     </div>

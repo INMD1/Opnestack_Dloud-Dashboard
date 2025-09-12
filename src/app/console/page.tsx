@@ -12,9 +12,10 @@ import { VscVm } from "react-icons/vsc";
 import { PiNetwork } from "react-icons/pi";
 import { GrStorage } from "react-icons/gr";
 import { IoRefresh } from "react-icons/io5";
+import { HiComputerDesktop } from "react-icons/hi2";
 import { Button } from "@/components/ui/button";
 import React from "react";
-import StatCard from "./exten/StatCard";
+import StatCard from "../exten/StatCard";
 
 interface Quota {
   in_use: number;
@@ -187,10 +188,16 @@ export default function Navbar() {
           </h1>
           <p className="text-lg text-gray-600 mt-1">{message}</p>
         </div>
-        <Button variant="outline" className="flex items-center gap-2">
-          <IoRefresh />
-          새로고침
-        </Button>
+        <div className="flex gap-x-5">
+          <Button variant="outline" className="flex items-center gap-2">
+            <HiComputerDesktop />
+            VM 생성
+          </Button>
+          <Button variant="outline" className="flex items-center gap-2">
+            <IoRefresh />
+            새로고침
+          </Button>
+        </div>
       </div>
       <section>
         <h2 className="text-2xl font-bold mb-4">사용량 요약</h2>
