@@ -11,13 +11,7 @@ export async function GET(req: NextRequest) {
         }
 
         const skylineClient = getSkylineClient(session.keystone_token);
-        const { searchParams } = new URL(req.url);
-
-        // The openapi-fetch client does not support passing searchParams directly in the way the old code did.
-        // We need to construct the path with query parameters manually if we want to pass them.
-        // However, the GET operation for /api/v1/extension/ports does not define any parameters in the OpenAPI spec.
-        // So, we will call it without any parameters.
-        const { data, error } = await skylineClient.GET("/api/v1/extension/ports");
+        const { data, error } = await skylineClient.GET("/api/v1/flavors");
 
         if (error) {
             return new NextResponse(JSON.stringify(error), { status: 500 });
@@ -25,7 +19,7 @@ export async function GET(req: NextRequest) {
 
         return new NextResponse(JSON.stringify(data), { status: 200 });
     } catch (err) {
-        console.error("List Ports API error:", err);
-        return new NextResponse(JSON.stringify({ message: "List Ports API failed" }), { status: 500 });
+        console.error("List Flavors API error:", err);
+        return new NextResponse(JSON.stringify({ message: "List Flavors API failed" }), { status: 500 });
     }
 }

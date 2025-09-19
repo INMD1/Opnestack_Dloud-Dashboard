@@ -1,7 +1,7 @@
-
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getSkylineClient } from "@/lib/skyline";
 
 export async function POST(req: NextRequest) {
     try {
@@ -10,27 +10,29 @@ export async function POST(req: NextRequest) {
             return new NextResponse(JSON.stringify({ message: "Unauthorized" }), { status: 401 });
         }
 
-        const skylineUrl = `${process.env.SKYLINE_API_URL}/api/v1/portforward`;
-        const body = await req.json();
+        const { instance_ip, external_port, internal_port } = await req.json();
 
-        const response = await fetch(skylineUrl, {
-            method: "POST",
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': session.keystone_token,
-            },
-            body: JSON.stringify(body),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            return new NextResponse(JSON.stringify(data), { status: response.status });
+        if (!instance_ip || !external_port || !internal_port) {
+            return new NextResponse(JSON.stringify({ message: "Missing required parameters: instance_ip, external_port, internal_port" }), { status: 400 });
         }
 
-        return new NextResponse(JSON.stringify(data), { status: 200 });
+        const skylineClient = getSkylineClient(session.keystone_token);
+        // Assuming Skyline API has an endpoint for port forwarding
+        const { data, error } = await skylineClient.POST("/api/v1/portforward", {
+            body: {
+                instance_ip,
+                external_port,
+                internal_port,
+            },
+        });
+
+        if (error) {
+            return new NextResponse(JSON.stringify(error), { status: 500 });
+        }
+
+        return new NextResponse(JSON.stringify(data), { status: 201 });
     } catch (err) {
-        console.error("Port Forwarding API error:", err);
-        return new NextResponse(JSON.stringify({ message: "Port Forwarding API failed" }), { status: 500 });
+        console.error("Port Forward API error:", err);
+        return new NextResponse(JSON.stringify({ message: "Port Forward API failed" }), { status: 500 });
     }
 }

@@ -13,15 +13,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
     const { data: session, status } = useSession();
     const path = usePathname();
-    const name = path.replace("/console", "undefind");
-    const pathname = () => {
-        switch (name) {
-            case "undefind":
-                return "Dcloud > 메인 페이지";
-            default:
-                return "Dcloud > 메인 페이지";
-        }
-    };
 
     async function handlelogut() {
         try {
@@ -41,10 +32,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <ProfileChecker />
             <AppSidebar />
             <div className=" grid-flow-col w-screen h-screen">
-                <div className="pl-10 pr-10 pt-10 flex justify-between items-center ">
-                    <div className="text-lg">
-                        {pathname()}
-                    </div>
+                <div className="pl-10 pr-10 pt-10 flex justify-end items-center ">
                     <div>
                         {session ? (
                             <div className="flex items-center gap-4">

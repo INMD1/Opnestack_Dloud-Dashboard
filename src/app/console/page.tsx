@@ -1,11 +1,8 @@
 "use client";
 
-import {
-  Card,
-} from "@/components/ui/card"
-import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { useSession } from "next-auth/react";
 
 //Icons
 import { VscVm } from "react-icons/vsc";
@@ -13,39 +10,29 @@ import { PiNetwork } from "react-icons/pi";
 import { GrStorage } from "react-icons/gr";
 import { IoRefresh } from "react-icons/io5";
 import { HiComputerDesktop } from "react-icons/hi2";
+import { FaRegClock } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import React from "react";
 import StatCard from "../exten/StatCard";
+import { components } from "@/lib/skyline-api";
+import { HardDrive, Key } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-interface Quota {
-  in_use: number;
-  limit: number;
-  reserved: number;
-}
+const welcomeMessages = [
+  "환영합니다! 새로운 시작을 함께해요 🚀",
+  "어서 오세요! 기다리고 있었어요 👋",
+  "환영해요! 즐거운 시간 보내세요 🎉",
+];
 
-interface Quotas {
-  instances: Quota;
-  cores: Quota;
-  ram: Quota;
-  volumes: Quota;
-  snapshots: Quota;
-  gigabytes: Quota;
-  floatingip: Quota;
-  network: Quota;
-  port: Quota;
-  router: Quota;
-  subnet: Quota;
-  security_group: Quota;
-  security_group_rule: Quota;
-  port_forwardings: Quota;
-}
+const mockActivity = [
+  { description: "인스턴스 'web-server-01'이 생성되었습니다.", timestamp: "5분 전" },
+  { description: "디스크 'db-data-disk'가 'db-server-01'에 연결되었습니다.", timestamp: "1시간 전" },
+  { description: "포트포워딩 규칙 (8080 -> 80)이 추가되었습니다.", timestamp: "3시간 전" },
+  { description: "인스턴스 'test-instance'가 삭제되었습니다.", timestamp: "1일 전" },
+];
 
-interface QuotaResponse {
-  quotas: Quotas;
-}
-
-const prettyKey = (key: keyof Quotas) => {
-  const map: Record<keyof Quotas, string> = {
+const prettyKey = (key: keyof components["schemas"]["QuotaSet"]) => {
+  const map: Record<keyof components["schemas"]["QuotaSet"], string> = {
     instances: "인스턴스",
     cores: "CPU 코어",
     ram: "램(MB)",
@@ -64,38 +51,11 @@ const prettyKey = (key: keyof Quotas) => {
   return map[key];
 };
 
-const welcomeMessages = [
-  "환영합니다! 새로운 시작을 함께해요 🚀",
-  "어서 오세요! 기다리고 있었어요 👋",
-  "환영해요! 즐거운 시간 보내세요 🎉",
-  "함께해서 기뻐요! 좋은 하루 되세요 🌟",
-  "환영합니다! 오늘도 화이팅입니다 💪",
-  "오신 걸 진심으로 환영합니다 🙌",
-  "어서 오세요! 즐겁게 놀다 가세요 😄",
-  "환영합니다! 새로운 인연을 기대해요 💫",
-  "환영해요! 여기서 좋은 추억 만드세요 📖",
-  "어서 오세요! 따뜻하게 맞이합니다 🔥",
-  "환영합니다! 특별한 하루 되세요 🌈",
-  "반가워요! 즐거운 시간을 보내세요 🥳",
-  "어서 오세요! 새로운 모험이 기다리고 있어요 ⚔️",
-  "환영합니다! 함께 성장해요 🌱",
-  "환영해요! 이곳에서 행복하시길 바랍니다 💖",
-  "어서 오세요! 차 한 잔 하고 가세요 ☕",
-  "환영합니다! 멋진 여정을 시작해요 🌍",
-  "반가워요! 즐거운 경험이 되길 바래요 🎶",
-  "어서 오세요! 오늘도 특별한 하루 되세요 ✨",
-  "환영해요! 마음껏 즐겨주세요 🕹️",
-  "환영합니다! 당신의 참여가 큰 힘이 됩니다 🌟",
-  "어서 오세요! 편하게 쉬다 가세요 🛋️",
-  "환영해요! 새로운 기회가 열리고 있어요 🔑",
-  "환영합니다! 언제나 환영해요 💌",
-  "어서 오세요! 지금 이 순간을 즐겨요 🎈",
-  "환영합니다! 이곳은 언제나 열려있어요 🚪",
-  "반가워요! 당신의 빛으로 환해져요 💡",
-  "어서 오세요! 따뜻한 공간에 오신 걸 환영해요 🌸",
-  "환영합니다! 함께라서 더 즐겁습니다 🤝",
-  "환영해요! 당신이 있어 더 특별해요 🌹",
-];
+interface Quota {
+  in_use: number;
+  limit: number;
+  reserved: number;
+}
 
 function toDonutData(q: Quota) {
   const inUse = Math.max(0, q.in_use);
@@ -155,13 +115,14 @@ const DonutCard: React.FC<{ title: string; quota: Quota }> = ({ title, quota }) 
 }
 
 
-export default function Navbar() {
+export default function ConsolePage() {
 
   const { data: session, status } = useSession();
   const [message, setMessage] = useState("");
-  const [limits, setLimits] = useState<QuotaResponse | null>(null);
-  const entries = Object.entries(limits?.quotas ?? {}).filter(([key]) => !["subnet", "security_group", "floatingip", "port", "router", "security_group_rule"].includes(key)) as [keyof Quotas, Quota][];
-  const isLoading = !limits?.quotas;
+  const [limits, setLimits] = useState<components["schemas"]["QuotaSet"] | null>(null);
+  let isLoading = false
+
+  const entries = Object.entries(limits ?? {}).filter(([key]) => !["subnet", "security_group", "floatingip", "port", "router", "security_group_rule"].includes(key)) as [keyof components["schemas"]["QuotaSet"], Quota][];
 
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * welcomeMessages.length);
@@ -170,10 +131,11 @@ export default function Navbar() {
     async function fetchData() {
       try {
         const res = await fetch("/api/v1/limits");
-        const data: QuotaResponse = await res.json();
-        setLimits(data);
+        const data = await res.json();
+        setLimits(data.quotas);
+        isLoading = true
       } catch (error) {
-        console.error("Failed to fetch limits:", error);
+        console.error("Error fetching limits:", error);
       }
     }
     fetchData();
@@ -188,11 +150,25 @@ export default function Navbar() {
           </h1>
           <p className="text-lg text-gray-600 mt-1">{message}</p>
         </div>
-        <div className="flex gap-x-5">
-          <Button variant="outline" className="flex items-center gap-2">
-            <HiComputerDesktop />
-            VM 생성
-          </Button>
+        <div className="flex items-center gap-x-3">
+          <a href="/console/instance/create">
+            <Button variant="outline" className="flex items-center gap-2">
+              <HiComputerDesktop />
+              VM 생성
+            </Button>
+          </a>
+          <a href="/console/disk/view">
+            <Button variant="outline" className="flex items-center gap-2">
+              <GrStorage />
+              디스크 생성
+            </Button>
+          </a>
+          <a href="/console/network/view">
+            <Button variant="outline" className="flex items-center gap-2">
+              <PiNetwork />
+              네트워크 관리
+            </Button>
+          </a>
           <Button variant="outline" className="flex items-center gap-2">
             <IoRefresh />
             새로고침
@@ -204,56 +180,88 @@ export default function Navbar() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <StatCard
             icon={<VscVm className="text-4xl text-blue-500" />}
-            title="VM 가동 수"
-            value={limits?.quotas?.instances.in_use}
-            unit="개"
-            isLoading={isLoading} children={undefined} />
+            title="인스턴스"
+            isLoading={isLoading} value={undefined} unit={undefined} children={undefined}          >
+            {limits ? (
+              <p className="text-3xl font-bold text-gray-800 mt-1">
+                {limits.instances.in_use} / {limits.instances.limit}
+                <span className="text-xl font-medium text-gray-600"> 개</span>
+              </p>
+            ) : (
+              <p className="text-xl text-gray-500 mt-1">데이터 없음</p>
+            )}
+          </StatCard>
+
           <StatCard
             icon={<PiNetwork className="text-4xl text-green-500" />}
             title="포트포워딩 개수"
-            value={limits?.quotas?.port_forwardings.in_use}
-            unit="개"
-            isLoading={isLoading} children={undefined}
-          />
-          {/*@ts-ignore*/}
+            isLoading={isLoading}
+          >
+            {limits ? (
+              <p className="text-3xl font-bold text-gray-800 mt-1">
+                {limits.port_forwardings.in_use} / {limits.port_forwardings.limit}
+                <span className="text-xl font-medium text-gray-600"> 개</span>
+              </p>
+            ) : (
+              <p className="text-xl text-gray-500 mt-1">데이터 없음</p>
+            )}
+          </StatCard>
+
           <StatCard
             icon={<GrStorage className="text-4xl text-purple-500" />}
             title="Disk 사용량"
             isLoading={isLoading}
           >
-            <div className="flex text-right">
-              <p className="text-xl font-semibold text-gray-700">{limits?.quotas?.volumes.in_use} 개</p>
-              <p className="text-lg text-gray-500">({limits?.quotas?.gigabytes.in_use} GB)</p>
-            </div>
+            {limits ? (
+              <div className="flex flex-col">
+                <p className="text-xl font-semibold text-gray-700">{limits.volumes.in_use} 개</p>
+                <p className="text-lg text-gray-500">({limits.gigabytes.in_use} GB)</p>
+              </div>
+            ) : (
+              <p className="text-xl text-gray-500 mt-1">데이터 없음</p>
+            )}
           </StatCard>
+
         </div>
       </section>
       <section>
-        <h2 className="text-2xl font-bold mb-4">계정 한도 및 서비스 상태</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* 계정 한도 (도넛 차트) */}
-          <div className="lg:col-span-2">
-            {isLoading ? (
-              <p>계정 한도 정보를 불러오는 중입니다...</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {entries.map(([key, quota]) => (
-                  <DonutCard key={key} title={prettyKey(key)} quota={quota} />
+        {/* 최근 활동 */}
+        <div className="w-full">
+          <Card className="h-full">
+            <CardHeader>
+              <CardTitle>최근 활동</CardTitle>
+              <CardDescription>계정의 최근 활동 내역입니다.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {mockActivity.map((activity, index) => (
+                  <div key={index} className="flex items-start gap-4">
+                    <div className="bg-muted rounded-full p-2">
+                      <FaRegClock className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm">{activity.description}</p>
+                      <p className="text-xs text-muted-foreground">{activity.timestamp}</p>
+                    </div>
+                  </div>
                 ))}
               </div>
-            )}
-          </div>
-
-          {/* 서비스 상태 (임베드) */}
-          <div className="w-full">
-            <Card className="overflow-hidden shadow-lg h-96">
-              <embed
-                src="https://discordstatus.com/"
-                title="Discord Status"
-                className="w-full h-full border-0"
-              />
-            </Card>
-          </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+      <section>
+        <h2 className="text-2xl font-bold mb-4">계정 한도 및 최근 활동</h2>
+        <div className="">
+          {isLoading ? (
+            <p>계정 한도 정보를 불러오는 중입니다...</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {entries.map(([key, quota]) => (
+                <DonutCard key={key} title={prettyKey(key)} quota={quota} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </div>

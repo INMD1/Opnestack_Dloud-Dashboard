@@ -23,6 +23,7 @@ import {
   IconSearch,
   IconSettings,
   IconUsers,
+  IconKey
 } from "@tabler/icons-react"
 import { NavMain } from "./nav-main"
 import { NavDocuments } from "./nav-documents"
@@ -32,18 +33,23 @@ const data = {
   navMain: [
     {
       title: "인터페이스",
-      url: "#",
+      url: "/console/instance/view",
       icon: IconDashboard,
     },
     {
       title: "네트워크",
-      url: "#",
+      url: "/console/network/view",
       icon: IconListDetails,
     },
     {
       title: "디스크",
-      url: "#",
+      url: "/console/disk/view",
       icon: IconChartBar,
+    },
+    {
+      title: "키페어",
+      url: "/console/keypair",
+      icon: IconKey,
     },
   ],
   navClouds: [
@@ -138,11 +144,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
+              className=""
             >
-              <a href="#">
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">DCloud Infra</span>
+              <a href="/console">
+                <IconInnerShadowTop className="!size-6" />
+                <span className="text-xl font-semibold">DCloud Infra</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
