@@ -63,16 +63,14 @@ export async function DELETE(req: NextRequest) {
     );
   }
 
-  const { skyline_url, skyline_admin_token } = await getSkylineSettings();
-
+  
   try {
-    const res = await fetch(`${skyline_url}/api/v1/keypairs`, {
+    const res = await fetch(`${process.env.SKYLINE_API_URL}/api/v1/keypairs/${name}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        "X-Auth-Token": skyline_admin_token || "",
+        "Authorization": session.keystone_token || "",
       },
-      body: JSON.stringify({ name }),
     });
 
     if (!res.ok) {
@@ -93,17 +91,3 @@ export async function DELETE(req: NextRequest) {
   }
 }
 
-async function getSkylineSettings() {
-  await connectMongoDB();
-  const skylineUrlSetting = await Setting.findOne({ name: "SKYLINE_URL" });
-  const skylineAdminTokenSetting = await Setting.findOne({
-    name: "SKYLINE_ADMIN_TOKEN",
-  });
-
-  return {
-    skyline_url: skylineUrlSetting ? skylineUrlSetting.value : "",
-    skyline_admin_token: skylineAdminTokenSetting
-      ? skylineAdminTokenSetting.value
-      : "",
-  };
-}

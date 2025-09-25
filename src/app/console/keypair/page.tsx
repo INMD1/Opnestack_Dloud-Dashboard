@@ -158,20 +158,20 @@ export default function KeypairPage() {
         </Dialog>
       </header>
 
-      <Dialog open={isPrivateKeyDialogOpen} onOpenChange={setPrivateKeyDialogOpen}>
-        <DialogContent>
+      <Dialog open={isPrivateKeyDialogOpen} onOpenChange={setPrivateKeyDialogOpen} >
+        <DialogContent >
           <DialogHeader>
             <DialogTitle>프라이빗 키</DialogTitle>
             <DialogDescription>
               프라이빗 키는 다시 확인할 수 없으니 안전한 곳에 저장하세요.
             </DialogDescription>
           </DialogHeader>
-          <div className="my-4">
+          <div className="overflow-y-auto max-h-96 my-4">
             <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto">
               <code>{privateKey}</code>
             </pre>
           </div>
-          <DialogFooter>
+          <DialogFooter >
             <Button onClick={handleDownloadPrivateKey}>다운로드</Button>
           </DialogFooter>
         </DialogContent>
