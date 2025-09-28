@@ -19,10 +19,11 @@ export default function InstanceCreatePage() {
     const [flavors, setFlavors] = useState<components["schemas"]["Flavor"][]>([]);
     const [images, setImages] = useState<components["schemas"]["Image"][]>([]);
     const [keypairs, setKeypairs] = useState<components["schemas"]["Keypair"][]>([]);
-    const [networks, setNetworks] = useState<components["schemas"]["PortsResponseBase"][]>([]);
+    const [networks, setNetworks] = useState<components["schemas"]["Network"][]>([]);
 
     const [instanceName, setInstanceName] = useState("");
     const [selectedFlavor, setSelectedFlavor] = useState<string | null>(null);
+    const [cinervolume, setcinervolume] = useState<string | null>(null);
     const [selectedImage, setSelectedImage] = useState<string>("");
     const [selectedKeypair, setSelectedKeypair] = useState<string>("");
     const [selectedNetwork, setSelectedNetwork] = useState<string>("");
@@ -51,7 +52,7 @@ export default function InstanceCreatePage() {
                     fetch("/api/v1/flavors").then(res => res.json()),
                     fetch("/api/v1/images").then(res => res.json()),
                     fetch("/api/v1/keypairs").then(res => res.json()),
-                    fetch("/api/v1/extension/ports").then(res => res.json()),
+                    fetch("/api/v1/networks").then(res => res.json()),
                 ]);
 
                 if (flavorsRes && flavorsRes.flavors) setFlavors(flavorsRes.flavors);
@@ -63,11 +64,10 @@ export default function InstanceCreatePage() {
                     setKeypairs(keypairsRes.keypairs);
                     if (keypairsRes.keypairs.length > 0) setSelectedKeypair(keypairsRes.keypairs[0].name);
                 }
-                if (networksRes && networksRes.ports) {
-                    // Filtering for unique networks by network_id
-                    const uniqueNetworks = Array.from(new Map(networksRes.ports.map(p => [p.network_id, p])).values());
-                    setNetworks(uniqueNetworks);
-                    if (uniqueNetworks.length > 0) setSelectedNetwork(uniqueNetworks[0].network_id!);
+                if (networksRes && networksRes.networks) {
+                    const filteredNetworks = networksRes.networks.filter(network => network.name !== 'external');
+                    setNetworks(filteredNetworks);
+                    if (filteredNetworks.length > 0) setSelectedNetwork(filteredNetworks[0].id!);
                 }
 
             } catch (error) {
@@ -80,10 +80,13 @@ export default function InstanceCreatePage() {
     }, []);
 
     const handleCreateInstance = async () => {
-        if (!instanceName || !selectedFlavor || !selectedImage || !selectedNetwork || !selectedKeypair) {
-            alert("모든 필드를 정확히 선택하고 인스턴스 이름을 입력해주세요.");
-            return;
-        }
+        const portForwardings = [
+            { external_port: 22, internal_port: 22 },
+            ...additionalPorts.map(p => ({
+                external_port: parseInt(p.external, 10),
+                internal_port: parseInt(p.internal, 10)
+            }))
+        ].filter(p => !isNaN(p.external_port) && !isNaN(p.internal_port));
 
         const instanceData = {
             name: instanceName,
@@ -91,7 +94,15 @@ export default function InstanceCreatePage() {
             flavor_id: selectedFlavor,
             key_name: selectedKeypair,
             network_id: selectedNetwork,
+            additional_ports: portForwardings,
+            volume_size: cinervolume
         };
+
+        console.log(instanceData);
+        if (!instanceName || !selectedFlavor || !selectedImage || !selectedNetwork || !selectedKeypair) {
+            alert("모든 필드를 정확히 선택하고 인스턴스 이름을 입력해주세요.");
+            return;
+        }
 
         try {
             const res = await fetch("/api/v1/instances", {
@@ -102,53 +113,18 @@ export default function InstanceCreatePage() {
                 body: JSON.stringify(instanceData),
             });
 
-            if (res.ok) {
+            if (res.status === 202) { // HTTP 202 Accepted
                 const responseData = await res.json();
-                const instanceIp = responseData.instance_ip;
-
-                if (instanceIp) {
-                    // Automatically forward port 22
-                    await handlePortForwarding(instanceIp, "22", "22");
-
-                    // Forward additional ports
-                    for (const port of additionalPorts) {
-                        await handlePortForwarding(instanceIp, port.external, port.internal);
-                    }
-                    alert(`인스턴스가 성공적으로 생성되었으며, IP ${instanceIp}에 포트 22 및 추가 포트가 설정되었습니다.`);
-                } else {
-                    alert('인스턴스가 성공적으로 생성되었지만, IP를 가져올 수 없어 포트 포워딩을 설정할 수 없습니다.');
-                }
-                window.location.href = '/console/instance/view';
+                const instanceId = responseData.id;
+                // instanceId를 가지고 상태를 보여줄 페이지로 이동
+                window.location.href = `/console/instance/${instanceId}/status`;
             } else {
                 const error = await res.json();
-                alert(`인스턴스 생성 실패: ${error.detail || '알 수 없는 오류'}`);
+                alert(`인스턴스 생성 요청 실패: ${error.detail || '알 수 없는 오류'}`);
             }
         } catch (error) {
             console.error("Instance creation failed:", error);
             alert("인스턴스 생성 중 오류가 발생했습니다.");
-        }
-    };
-
-    const handlePortForwarding = async (instanceIp: string, externalPort: string, internalPort: string) => {
-        try {
-            const res = await fetch("/api/v1/portforward", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    instance_ip: instanceIp,
-                    external_port: externalPort,
-                    internal_port: internalPort,
-                }),
-            });
-
-            if (!res.ok) {
-                const error = await res.json();
-                console.error(`Failed to forward port ${externalPort}:${internalPort} for ${instanceIp}:`, error);
-            }
-        } catch (error) {
-            console.error(`Error forwarding port ${externalPort}:${internalPort} for ${instanceIp}:`, error);
         }
     };
 
@@ -200,7 +176,7 @@ export default function InstanceCreatePage() {
                                     flavors.map((flavor) => (
                                         <div
                                             key={flavor.id}
-                                            onClick={() => setSelectedFlavor(flavor.id)}
+                                            onClick={() => { setSelectedFlavor(flavor.id); setcinervolume(String(flavor.disk)) }}
                                             className={cn(
                                                 "p-4 border rounded-lg cursor-pointer transition-all",
                                                 selectedFlavor === flavor.id
@@ -223,18 +199,18 @@ export default function InstanceCreatePage() {
                         </CardContent>
                     </Card>
 
-                    <Card className="grid grid-cols-2">
-                        <div>
-                            <CardHeader>
-                                <CardTitle>운영체제 (OS) 선택</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <Label htmlFor="os-select pb-4" className="sr-only">운영체제 선택</Label>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>운영체제 (OS) 및 네트워크 선택</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <Label htmlFor="os-select">운영체제</Label>
                                 <select
                                     id="os-select"
                                     value={selectedImage}
                                     onChange={(e) => setSelectedImage(e.target.value)}
-                                    className="w-full p-2 border rounded-md bg-background"
+                                    className="w-full p-2 border rounded-md bg-background mt-1"
                                     disabled={loading || images.length === 0}
                                 >
                                     {images.map((image) => (
@@ -244,18 +220,28 @@ export default function InstanceCreatePage() {
                                     ))}
                                 </select>
                                 {images.length === 0 && !loading && <p className="text-sm text-muted-foreground mt-2">사용 가능한 이미지가 없습니다.</p>}
-                            </CardContent>
-                        </div>
-                        <div>
-                            <CardHeader>
-                                <CardTitle>운영체제 간단 설명</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <Label htmlFor="os-select" className="sr-only">운영체제 선택</Label>
-                            </CardContent>
-                        </div>
+                            </div>
+                            <div>
+                                <Label htmlFor="network-select">네트워크</Label>
+                                <select
+                                    id="network-select"
+                                    value={selectedNetwork}
+                                    onChange={(e) => setSelectedNetwork(e.target.value)}
+                                    className="w-full p-2 border rounded-md bg-background mt-1"
+                                    disabled={loading || networks.length === 0}
+                                >
+                                    {networks.map((network) => (
+                                        <option key={network.id} value={network.id}>
+                                            {network.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                {networks.length === 0 && !loading && <p className="text-sm text-muted-foreground mt-2">사용 가능한 네트워크가 없습니다.</p>}
+                            </div>
+                        </CardContent>
                     </Card>
-                    <div className="grid grid-cols-2 gap-8">
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <Card>
                             <CardHeader>
                                 <CardTitle>키페어 선택</CardTitle>
@@ -287,7 +273,7 @@ export default function InstanceCreatePage() {
                                 <CardTitle>포트포워딩 설정</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-sm text-muted-foreground">SSH 포트 같은경우 VM이 제작이 다되었으면 자동으로 할당을 합니다.</p>
+                                <p className="text-sm text-muted-foreground">SSH 포트(22)는 자동으로 포워딩됩니다.</p>
                                 <div className="mt-4 space-y-2">
                                     <h4 className="font-semibold">추가 포트</h4>
                                     {additionalPorts.map((port, index) => (

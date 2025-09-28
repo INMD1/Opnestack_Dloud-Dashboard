@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        return new NextResponse(JSON.stringify({ ...data, instance_ip: instanceIp }), { status: 201 });
+        return new NextResponse(JSON.stringify({ ...data, instance_ip: instanceIp }), { status: 202 });
     } catch (err) {
         console.error("Create Instance API error:", err);
         return new NextResponse(JSON.stringify({ message: "Create Instance API failed" }), { status: 500 });
