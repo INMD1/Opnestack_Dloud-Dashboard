@@ -32,9 +32,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { components } from "@/lib/skyline-api";
 
+interface PortForward {
+  id: string;
+  external_port: number;
+  internal_port: number;
+  instance_name: string;
+  internal_ip: string;
+}
+
+interface OriginData {
+  fixed_ips?: Array<{ ip_address: string }>;
+  device_owner?: string;
+}
+
 export default function NetworkViewPage() {
     const [ips, setIps] = useState<components["schemas"]["PortsResponseBase"][]>([]);
-    const [portForwards, setPortForwards] = useState<any[]>([]);
+    const [portForwards, setPortForwards] = useState<PortForward[]>([]);
     const [loading, setLoading] = useState(true);
     const [isRequestDialogOpen, setRequestDialogOpen] = useState(false);
     const [isPortForwardDialogOpen, setPortForwardDialogOpen] = useState(false);
@@ -212,12 +225,12 @@ function IpTable({ ips, loading }: { ips: components["schemas"]["PortsResponseBa
                     <TableRow><TableCell colSpan={5} className="text-center h-24">목록을 불러오는 중입니다...</TableCell></TableRow>
                 ) : ips.map(ip => (
                     <TableRow key={ip.id}>
-                        <TableCell className="font-mono">{(ip.origin_data as any)?.fixed_ips?.[0]?.ip_address}</TableCell>
+                        <TableCell className="font-mono">{(ip.origin_data as OriginData)?.fixed_ips?.[0]?.ip_address}</TableCell>
                         <TableCell>
                             <Badge variant={ip.device_owner === 'network:floatingip' ? 'secondary' : 'outline'}>{ip.device_owner}</Badge>
                         </TableCell>
                         <TableCell>{ip.status}</TableCell>
-                        <TableCell>{(ip.origin_data as any)?.device_owner}</TableCell>
+                        <TableCell>{(ip.origin_data as OriginData)?.device_owner}</TableCell>
                         <TableCell className="text-right">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -236,7 +249,7 @@ function IpTable({ ips, loading }: { ips: components["schemas"]["PortsResponseBa
     );
 }
 
-function PortForwardTable({ portForwards, loading }: { portForwards: any[], loading: boolean }) {
+function PortForwardTable({ portForwards, loading }: { portForwards: PortForward[], loading: boolean }) {
     return (
         <Table>
             <TableHeader>

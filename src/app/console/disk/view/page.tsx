@@ -101,7 +101,7 @@ export default function DiskViewPage() {
             setNewDiskName("");
             setNewDiskSize("");
             fetchDisks(); // Refresh the list
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Failed to create disk", error);
             alert(`디스크 생성에 실패했습니다: ${error.message}`);
         }

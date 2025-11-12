@@ -1,4 +1,4 @@
-//@ts-nocheck
+
 import { Card } from "@/components/ui/card"; 
 
 export default function StatCard({ icon, title, value, unit, isLoading, children }) {

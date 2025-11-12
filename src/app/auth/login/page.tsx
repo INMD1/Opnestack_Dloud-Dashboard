@@ -12,16 +12,24 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const formSchema = z.object({
+  username: z.string().min(1, { message: "Username is required." }),
+  password: z.string().min(1, { message: "Password is required." }),
+});
 
 export default function LoginPage() {
-  const form = useForm({
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       username: "",
       password: "",
     },
   });
 
-  async function onSubmit(data: any) {
+  async function onSubmit(data: z.infer<typeof formSchema>) {
     const res = await signIn("credentials", {
       redirect: true, 
       username: data.username,

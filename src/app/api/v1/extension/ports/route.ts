@@ -1,9 +1,9 @@
 import { getServerSession } from "next-auth/next";
-import { NextRequest, NextResponse } from "next/server";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { NextResponse } from "next/server";
+import { authOptions } from "@/lib/auth";
 import { getSkylineClient } from "@/lib/skyline";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
     try {
         const session = await getServerSession(authOptions);
         if (!session?.keystone_token) {
@@ -11,7 +11,6 @@ export async function GET(req: NextRequest) {
         }
 
         const skylineClient = getSkylineClient(session.keystone_token);
-        const { searchParams } = new URL(req.url);
 
         // The openapi-fetch client does not support passing searchParams directly in the way the old code did.
         // We need to construct the path with query parameters manually if we want to pass them.

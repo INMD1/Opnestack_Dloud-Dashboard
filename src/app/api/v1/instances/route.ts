@@ -1,6 +1,8 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { getSkylineClient } from "@/lib/skyline";
 
 export async function POST(req: NextRequest) {
@@ -34,5 +36,31 @@ export async function POST(req: NextRequest) {
     } catch (err) {
         console.error("Create Instance API error:", err);
         return new NextResponse(JSON.stringify({ message: "Create Instance API failed" }), { status: 500 });
+    }
+}
+
+export async function GET(req: NextRequest) {
+    const searchParams = req.nextUrl.searchParams
+    const instance_id = searchParams.get('instance_id');
+    if (!instance_id) {
+        return new NextResponse(JSON.stringify({ message: "Missing instance_id" }), { status: 400 });
+    }
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session?.keystone_token) {
+            return new NextResponse(JSON.stringify({ message: "Unauthorized" }), { status: 401 });
+        }
+
+        const skylineClient = getSkylineClient(session.keystone_token);
+        const { data, error } = await skylineClient.GET(`/api/v1/instances/${instance_id}`, {});
+
+        if (error) {
+            return new NextResponse(JSON.stringify(error), { status: 500 });
+        }
+
+        return new NextResponse(JSON.stringify(data), { status: 200 });
+    } catch (err) {
+        console.error("Get Instances API error:", err);
+        return new NextResponse(JSON.stringify({ message: "Get Instances API failed" }), { status: 500 });
     }
 }

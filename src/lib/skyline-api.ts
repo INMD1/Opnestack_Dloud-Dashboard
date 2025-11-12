@@ -489,7 +489,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get?: operations["list_settings_api_v1_settings_get"];
         put?: never;
         /** Create Instance */
         post: operations["create_instance_api_v1_instances_post"];

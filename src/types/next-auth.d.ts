@@ -4,7 +4,7 @@ declare module "next-auth" {
   interface Session {
     keystone_token?: string;
     exp?: number;
-    skyline_session?: any;
+    skyline_session?: Record<string, unknown>;
     user?: {
       id: string;
       name: string;
@@ -20,6 +20,6 @@ declare module "next-auth/jwt" {
     email?: string;
     keystone_token?: string;
     exp?: number;
-    session?: any;
+    session?: Record<string, unknown>;
   }
 }

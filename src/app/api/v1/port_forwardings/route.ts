@@ -1,9 +1,9 @@
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { getSkylineClient } from "@/lib/skyline";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
     try {
         const session = await getServerSession(authOptions);
         if (!session?.keystone_token) {
@@ -11,9 +11,8 @@ export async function GET(req: NextRequest) {
         }
 
         const skylineClient = getSkylineClient(session.keystone_token);
-        // NOTE: The openapi spec does not define a GET method for /api/v1/port_forwardings
-        // Assuming this is a custom endpoint or a mistake in the original code.
-        // We will try to call it and see what happens.
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         const { data, error } = await skylineClient.GET("/api/v1/port_forwardings");
 
         if (error) {

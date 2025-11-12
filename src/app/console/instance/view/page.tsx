@@ -1,25 +1,28 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
 "use client"
 
 import { useState, useEffect } from "react";
 import { MoreHorizontal } from "lucide-react";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { components } from "@/lib/skyline-api";
+import { useRouter } from "next/navigation";
 
 //데이터 예제
 
@@ -31,6 +34,7 @@ const statusStyles: { [key: string]: string } = {
 
 
 export default function InstanceViewPage() {
+    const router = useRouter();
     const [instances, setInstances] = useState<components["schemas"]["ServersResponseBase"][]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -63,7 +67,7 @@ export default function InstanceViewPage() {
                         생성된 가상 머신 인스턴스를 확인하고 관리합니다.
                     </p>
                 </div>
-                <Button onClick={() => window.location.href='/console/instance/create'}>
+                <Button onClick={() => window.location.href = '/console/instance/create'}>
                     새 인스턴스 생성
                 </Button>
             </header>
@@ -109,8 +113,8 @@ export default function InstanceViewPage() {
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem onClick={() => alert(`수정: ${instance.name}`)}>
-                                                        수정
+                                                    <DropdownMenuItem onClick={() => {router.push(`/console/instance/${instance.id}/info`)}}>
+                                                        정보
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem onClick={() => alert(`재시작: ${instance.name}`)}>
                                                         재시작

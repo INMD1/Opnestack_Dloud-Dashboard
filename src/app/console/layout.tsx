@@ -1,19 +1,15 @@
 "use client";
 
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import ProfileChecker from "../exten/ProfileChecker";
 
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-
     const { data: session, status } = useSession();
-    const path = usePathname();
-
     async function handlelogut() {
         try {
             await fetch("/api/auth/logout", { method: "POST" });

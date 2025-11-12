@@ -1,8 +1,7 @@
-
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 
-export async function POST(req: Request) {
+export async function POST() {
     try {
         const session = await getServerSession(authOptions);
         if (session?.keystone_token) {

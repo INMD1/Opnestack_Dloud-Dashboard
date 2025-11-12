@@ -1,8 +1,6 @@
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -15,14 +13,12 @@ import {
   IconFileAi,
   IconFileDescription,
   IconBellExclamation,
-  IconFolder,
   IconHelp,
   IconInnerShadowTop,
   IconListDetails,
   IconFileDots,
   IconSearch,
   IconSettings,
-  IconUsers,
   IconKey
 } from "@tabler/icons-react"
 import { NavMain } from "./nav-main"

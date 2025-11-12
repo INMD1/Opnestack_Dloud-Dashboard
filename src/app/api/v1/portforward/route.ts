@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { getSkylineClient } from "@/lib/skyline";
 
 export async function POST(req: NextRequest) {
