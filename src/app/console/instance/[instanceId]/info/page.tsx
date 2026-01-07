@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react";
-
+import { useParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 
 
 
-export default function InstanceInfoPage({ params }: { params: { instanceId: string } }) {
-    const { instanceId } = params;
+export default function InstanceInfoPage() {
+    const params = useParams();
+    const instanceId = params.instanceId as string;
     const [instances, setInstances] = useState<[]>([]);
     const [novnc, setNovnc] = useState<"">("");
     useEffect(() => {

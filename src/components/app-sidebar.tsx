@@ -140,11 +140,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className=""
+              className="hover:bg-sidebar-accent transition-all duration-300 group"
             >
-              <a href="/console">
-                <IconInnerShadowTop className="!size-6" />
-                <span className="text-xl font-semibold">DCloud Infra</span>
+              <a href="/console" className="flex items-center gap-3">
+                <div className="gradient-primary p-2 rounded-lg">
+                  <IconInnerShadowTop className="!size-5 text-white" />
+                </div>
+                <span className="text-xl font-bold gradient-text">DCloud Infra</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

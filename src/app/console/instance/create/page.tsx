@@ -19,7 +19,8 @@ export default function InstanceCreatePage() {
     const [flavors, setFlavors] = useState<components["schemas"]["Flavor"][]>([]);
     const [images, setImages] = useState<components["schemas"]["Image"][]>([]);
     const [keypairs, setKeypairs] = useState<components["schemas"]["Keypair"][]>([]);
-    const [networks, setNetworks] = useState<components["schemas"]["Network"][]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [networks, setNetworks] = useState<any[]>([]);
 
     const [instanceName, setInstanceName] = useState("");
     const [selectedFlavor, setSelectedFlavor] = useState<string | null>(null);
@@ -65,7 +66,8 @@ export default function InstanceCreatePage() {
                     if (keypairsRes.keypairs.length > 0) setSelectedKeypair(keypairsRes.keypairs[0].name);
                 }
                 if (networksRes && networksRes.networks) {
-                    const filteredNetworks = networksRes.networks.filter(network => network.name !== 'external');
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const filteredNetworks = networksRes.networks.filter((network: any) => network.name !== 'external');
                     setNetworks(filteredNetworks);
                     if (filteredNetworks.length > 0) setSelectedNetwork(filteredNetworks[0].id!);
                 }

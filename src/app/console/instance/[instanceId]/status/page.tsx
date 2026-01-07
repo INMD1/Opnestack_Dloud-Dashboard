@@ -3,9 +3,9 @@ import ClientInstanceStatus from "./ClientInstanceStatus";
 export default async function InstanceStatusPage({
   params,
 }: {
-  params: { instanceId: string };
+  params: Promise<{ instanceId: string }>;
 }) {
-  const { instanceId } = params;
+  const { instanceId } = await params;
 
   return <ClientInstanceStatus instanceId={instanceId} />;
 }

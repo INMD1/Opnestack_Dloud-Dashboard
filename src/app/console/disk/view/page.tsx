@@ -103,7 +103,8 @@ export default function DiskViewPage() {
             fetchDisks(); // Refresh the list
         } catch (error: unknown) {
             console.error("Failed to create disk", error);
-            alert(`디스크 생성에 실패했습니다: ${error.message}`);
+            const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.";
+            alert(`디스크 생성에 실패했습니다: ${errorMessage}`);
         }
     };
 

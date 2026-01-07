@@ -23,7 +23,8 @@ export async function POST(req: NextRequest) {
                 instance_ip,
                 external_port,
                 internal_port,
-            },
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any,
         });
 
         if (error) {

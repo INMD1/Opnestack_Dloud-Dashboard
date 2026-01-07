@@ -78,7 +78,12 @@ function toDonutData(q: Quota) {
   };
 }
 
-const COLORS = ["#3b82f6", "#f59e0b", "#e5e7eb"];
+// 더 생동감 있는 차트 색상 (oklch 기반)
+const COLORS = [
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))"
+];
 
 const DonutCard: React.FC<{ title: string; quota: Quota }> = ({ title, quota }) => {
   const { chart, pct, limit } = toDonutData(quota);
@@ -106,9 +111,9 @@ const DonutCard: React.FC<{ title: string; quota: Quota }> = ({ title, quota }) 
           </ResponsiveContainer>
         </div>
         <div>
-          {title}
-          <div className="text-3xl font-semibold leading-tight">{pct.toFixed(0)}%</div>
-          <div className="text-xs text-gray-500">In use of {limit}</div>
+          <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>
+          <div className="text-3xl font-bold gradient-text leading-tight">{pct.toFixed(0)}%</div>
+          <div className="text-xs text-muted-foreground mt-1">사용 중: {limit}개 중</div>
         </div>
       </div>
     </div>
@@ -143,34 +148,34 @@ export default function ConsolePage() {
   }, []);
 
   return (
-    <div className=" mx-auto px-14 py-8 space-y-10">
+    <div className="mx-auto px-14 py-8 space-y-10">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">
-            안녕하세요, {session?.user?.name || "사용자"}님! 👋
+          <h1 className="text-4xl font-bold">
+            <span className="gradient-text">안녕하세요, {session?.user?.name || "사용자"}님!</span> 👋
           </h1>
-          <p className="text-lg text-gray-600 mt-1">{message}</p>
+          <p className="text-lg text-muted-foreground mt-2">{message}</p>
         </div>
         <div className="flex items-center gap-x-3">
           <a href="/console/instance/create">
-            <Button variant="outline" className="flex items-center gap-2">
+            <Button className="gradient-primary text-white flex items-center gap-2 hover-lift">
               <HiComputerDesktop />
               VM 생성
             </Button>
           </a>
           <a href="/console/disk/view">
-            <Button variant="outline" className="flex items-center gap-2">
+            <Button variant="outline" className="flex items-center gap-2 hover-lift">
               <GrStorage />
               디스크 생성
             </Button>
           </a>
           <a href="/console/network/view">
-            <Button variant="outline" className="flex items-center gap-2">
+            <Button variant="outline" className="flex items-center gap-2 hover-lift">
               <PiNetwork />
               네트워크 관리
             </Button>
           </a>
-          <Button variant="outline" className="flex items-center gap-2">
+          <Button variant="outline" className="flex items-center gap-2 hover-lift">
             <IoRefresh />
             새로고침
           </Button>
@@ -226,23 +231,25 @@ export default function ConsolePage() {
         </div>
       </section>
       <section>
-        {/* 최근 활동 */}
+        {/* 최근 활동 - 타임라인 스타일 */}
         <div className="w-full">
-          <Card className="h-full">
+          <Card className="h-full hover-lift">
             <CardHeader>
-              <CardTitle>최근 활동</CardTitle>
+              <CardTitle className="gradient-text-cyan">최근 활동</CardTitle>
               <CardDescription>계정의 최근 활동 내역입니다.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-4 relative">
+                {/* 타임라인 세로선 */}
+                <div className="absolute left-[18px] top-0 bottom-0 w-[2px] bg-gradient-to-b from-primary via-accent to-transparent" />
                 {mockActivity.map((activity, index) => (
-                  <div key={index} className="flex items-start gap-4">
-                    <div className="bg-muted rounded-full p-2">
-                      <FaRegClock className="h-4 w-4 text-muted-foreground" />
+                  <div key={index} className="flex items-start gap-4 relative transition-all duration-300 hover:translate-x-2">
+                    <div className="gradient-primary rounded-full p-2 z-10 ring-4 ring-background">
+                      <FaRegClock className="h-4 w-4 text-white" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm">{activity.description}</p>
-                      <p className="text-xs text-muted-foreground">{activity.timestamp}</p>
+                      <p className="text-sm font-medium">{activity.description}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{activity.timestamp}</p>
                     </div>
                   </div>
                 ))}

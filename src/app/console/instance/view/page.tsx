@@ -62,27 +62,32 @@ export default function InstanceViewPage() {
         <div className="container mx-auto p-4 sm:p-6 lg:p-8">
             <header className="mb-8 flex items-center justify-between">
                 <div>
-                    <h1 className="text-4xl font-bold tracking-tight">인스턴스 목록</h1>
+                    <h1 className="text-4xl font-bold tracking-tight">
+                        <span className="gradient-text">인스턴스 목록</span>
+                    </h1>
                     <p className="text-muted-foreground mt-2">
                         생성된 가상 머신 인스턴스를 확인하고 관리합니다.
                     </p>
                 </div>
-                <Button onClick={() => window.location.href = '/console/instance/create'}>
+                <Button
+                    onClick={() => window.location.href = '/console/instance/create'}
+                    className="gradient-primary text-white hover-lift"
+                >
                     새 인스턴스 생성
                 </Button>
             </header>
 
-            <Card>
+            <Card className="hover-lift">
                 <CardContent className="p-5">
                     <Table>
                         <TableHeader>
-                            <TableRow>
-                                <TableHead>이름</TableHead>
-                                <TableHead>상태</TableHead>
-                                <TableHead>사양 (Flavor)</TableHead>
-                                <TableHead>IP 주소</TableHead>
-                                <TableHead>생성일</TableHead>
-                                <TableHead className="text-right pr-6">작업</TableHead>
+                            <TableRow className="bg-gradient-to-r from-primary/5 to-accent/5 hover:from-primary/10 hover:to-accent/10">
+                                <TableHead className="font-bold">이름</TableHead>
+                                <TableHead className="font-bold">상태</TableHead>
+                                <TableHead className="font-bold">사양 (Flavor)</TableHead>
+                                <TableHead className="font-bold">IP 주소</TableHead>
+                                <TableHead className="font-bold">생성일</TableHead>
+                                <TableHead className="text-right pr-6 font-bold">작업</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -94,7 +99,10 @@ export default function InstanceViewPage() {
                                 </TableRow>
                             ) : instances.length > 0 ? (
                                 instances.map((instance) => (
-                                    <TableRow key={instance.id}>
+                                    <TableRow
+                                        key={instance.id}
+                                        className="transition-all duration-200 hover:bg-accent/50 hover:border-l-4 hover:border-primary"
+                                    >
                                         <TableCell className="font-medium">{instance.name}</TableCell>
                                         <TableCell>
                                             <Badge variant="outline" className={statusStyles[instance.status] || statusStyles.Stopped}>
@@ -107,13 +115,13 @@ export default function InstanceViewPage() {
                                         <TableCell className="text-right">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                                    <Button variant="ghost" className="h-8 w-8 p-0 hover-lift">
                                                         <span className="sr-only">메뉴 열기</span>
                                                         <MoreHorizontal className="h-4 w-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem onClick={() => {router.push(`/console/instance/${instance.id}/info`)}}>
+                                                    <DropdownMenuItem onClick={() => { router.push(`/console/instance/${instance.id}/info`) }}>
                                                         정보
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem onClick={() => alert(`재시작: ${instance.name}`)}>
