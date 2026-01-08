@@ -1,6 +1,7 @@
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -23,6 +24,7 @@ import {
 } from "@tabler/icons-react"
 import { NavMain } from "./nav-main"
 import { NavDocuments } from "./nav-documents"
+import { ThemeToggle } from "./ThemeToggle"
 
 const data = {
 
@@ -156,6 +158,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={data.navMain} />
         <NavDocuments items={data.documents} />
       </SidebarContent>
+      <SidebarFooter>
+        <div className="flex items-center justify-between px-2">
+          <span className="text-xs text-muted-foreground">테마</span>
+          <ThemeToggle />
+        </div>
+      </SidebarFooter>
     </Sidebar>
   )
 }
