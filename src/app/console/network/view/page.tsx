@@ -33,6 +33,7 @@ import { Label } from "@/components/ui/label";
 import { components } from "@/lib/skyline-api";
 
 interface PortForward {
+  internal_ip_address: string;
   id: string;
   external_port: number;
   internal_port: number;
@@ -63,7 +64,7 @@ export default function NetworkViewPage() {
         try {
             const [portsRes, portForwardsRes] = await Promise.all([
                 fetch("/api/v1/extension/ports").then(res => res.json()),
-                fetch("/api/v1/port_forwardings").then(res => res.json())
+                fetch("/api/v1/port_forwardings/stats").then(res => res.json())
             ]);
 
             if (portsRes && portsRes.ports) {
@@ -71,7 +72,9 @@ export default function NetworkViewPage() {
             }
 
             if (portForwardsRes) {
-                setPortForwards(portForwardsRes.data || []);
+                console.log(portForwardsRes);
+                
+                setPortForwards(portForwardsRes.port_forwardings || []);
             }
         } catch (error) {
             console.error("Failed to fetch network data", error);
@@ -124,10 +127,10 @@ export default function NetworkViewPage() {
                 <div>
                     <h1 className="text-4xl font-bold tracking-tight">네트워크 관리</h1>
                     <p className="text-muted-foreground mt-2">
-                        IP 주소와 포트 포워딩 규칙을 확인하고 관리합니다.
+                        IP 주소와 포트 포워딩 규칙을 확인합니다.(생성/삭제는 개발중).
                     </p>
                 </div>
-                <Dialog open={isRequestDialogOpen} onOpenChange={setRequestDialogOpen}>
+                {/* <Dialog open={isRequestDialogOpen} onOpenChange={setRequestDialogOpen}>
                     <DialogTrigger asChild>
                         <Button>
                             <PlusCircle className="mr-2 h-4 w-4" />
@@ -150,7 +153,7 @@ export default function NetworkViewPage() {
                             </Button>
                         </div>
                     </DialogContent>
-                </Dialog>
+                </Dialog> */}
 
                 {/* Port Forwarding Create Dialog */}
                 <Dialog open={isPortForwardDialogOpen} onOpenChange={setPortForwardDialogOpen}>
@@ -256,7 +259,7 @@ function PortForwardTable({ portForwards, loading }: { portForwards: PortForward
                 <TableRow>
                     <TableHead>외부 포트</TableHead>
                     <TableHead>내부 포트</TableHead>
-                    <TableHead>대상 인스턴스</TableHead>
+   
                     <TableHead>대상 내부 IP</TableHead>
                     <TableHead className="text-right pr-6">작업</TableHead>
                 </TableRow>
@@ -268,10 +271,9 @@ function PortForwardTable({ portForwards, loading }: { portForwards: PortForward
                     <TableRow key={pf.id}>
                         <TableCell className="font-medium">{pf.external_port}</TableCell>
                         <TableCell>{pf.internal_port}</TableCell>
-                        <TableCell>{pf.instance_name}</TableCell>
-                        <TableCell className="font-mono">{pf.internal_ip}</TableCell>
+                        <TableCell className="font-mono">{pf.internal_ip_address}</TableCell>
                         <TableCell className="text-right">
-                            <DropdownMenu>
+                            {/* <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button>
                                 </DropdownMenuTrigger>
@@ -279,7 +281,7 @@ function PortForwardTable({ portForwards, loading }: { portForwards: PortForward
                                     <DropdownMenuItem>규칙 수정</DropdownMenuItem>
                                     <DropdownMenuItem className="text-red-600 focus:text-red-600">규칙 삭제</DropdownMenuItem>
                                 </DropdownMenuContent>
-                            </DropdownMenu>
+                            </DropdownMenu> */}
                         </TableCell>
                     </TableRow>
                 ))}

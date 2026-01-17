@@ -7,5 +7,9 @@ export default async function InstanceStatusPage({
 }) {
   const { instanceId } = await params;
 
-  return <ClientInstanceStatus instanceId={instanceId} />;
+  return <>
+    <div className="container place-content-center  p-4 sm:p-6 lg:p-8">
+      <ClientInstanceStatus instanceId={instanceId} />
+    </div>
+  </>;
 }

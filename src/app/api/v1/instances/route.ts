@@ -5,6 +5,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { getSkylineClient } from "@/lib/skyline";
 
+function jsonResponse(data: any, status = 200) {
+    return new NextResponse(JSON.stringify(data), {
+        status,
+        headers: { "Content-Type": "application/json" },
+    });
+}
+
+
 export async function POST(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
@@ -62,5 +70,44 @@ export async function GET(req: NextRequest) {
     } catch (err) {
         console.error("Get Instances API error:", err);
         return new NextResponse(JSON.stringify({ message: "Get Instances API failed" }), { status: 500 });
+    }
+}
+
+
+export async function DELETE(req: NextRequest) {
+    const instance_id = req.nextUrl.searchParams.get("instance_id");
+
+    if (!instance_id) {
+        return jsonResponse({ message: "Missing instance_id" }, 400);
+    }
+
+    try {
+        const session = await getServerSession(authOptions);
+
+        if (!session?.keystone_token) {
+            return jsonResponse({ message: "Unauthorized" }, 401);
+        }
+
+        const skylineClient = getSkylineClient(session.keystone_token);
+
+        const { data, error, response } = await skylineClient.DELETE(
+            `/api/v1/instances/${instance_id}`,
+            {}
+        );
+
+        if (error) {
+            return jsonResponse(
+                {
+                    message: "Failed to delete instance",
+                    error,
+                },
+                response?.status || 500
+            );
+        }
+
+        return jsonResponse(data, 200);
+    } catch (err) {
+        console.error("Delete Instance API error:", err);
+        return jsonResponse({ message: "Delete Instance API failed" }, 500);
     }
 }

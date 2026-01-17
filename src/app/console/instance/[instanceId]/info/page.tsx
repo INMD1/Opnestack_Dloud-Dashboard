@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, Plus, Terminal } from "lucide-react";
+import { Trash2, Plus, Terminal, MoreHorizontal } from "lucide-react";
 import { toaster } from "@/components/ui/toaster";
 import {
     Accordion,
@@ -25,6 +25,12 @@ interface PortForwarding {
     external_port: number;
     protocol: string;
 }
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Instance {
     created: string;
@@ -56,6 +62,76 @@ export default function InstanceInfoPage() {
         fetchInstanceData();
         fetchNovnc();
     }, [instanceId]);
+
+    // 인스턴스 시작
+    const startInstance = async (instanceId: string) => {
+        try {
+            const res = await fetch(`/api/v1/instances/${instanceId}/start`, {
+                method: "POST",
+            });
+            if (!res.ok) {
+                throw new Error("Failed to start instance");
+            }
+            alert("인스턴스를 시작했습니다.");
+            // 서버 정보 새로고침
+            const refreshRes = await fetch(`/api/v1/instances?instance_id=${instanceId}`);
+            if (refreshRes.ok) {
+                const data = await refreshRes.json();
+                if (data && data.servers) {
+                    setInstance(data.servers);
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            alert("인스턴스 시작에 실패했습니다.");
+        }
+    };
+
+    // 인스턴스 정지
+    const stopInstance = async (instanceId: string) => {
+        try {
+            const res = await fetch(`/api/v1/instances/${instanceId}/stop`, {
+                method: "POST",
+            });
+            if (!res.ok) {
+                throw new Error("Failed to stop instance");
+            }
+            alert("인스턴스를 정지했습니다.");
+            // 서버 정보 새로고침
+            const refreshRes = await fetch(`/api/v1/instances?instance_id=${instanceId}`);
+            if (refreshRes.ok) {
+                const data = await refreshRes.json();
+                if (data && data.servers) {
+                    setInstance(data.servers);
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            alert("인스턴스 정지에 실패했습니다.");
+        }
+    };
+
+    // 인스턴스 재시작
+    const rebootInstance = async (instanceId: string) => {
+        try {
+            const res = await fetch(`/api/v1/instances/${instanceId}/reboot`, {
+                method: "POST",
+            });
+            if (!res.ok) {
+                throw new Error("Failed to reboot instance");
+            }
+            alert("인스턴스를 재시작했습니다.");
+            // 서버 정보 새로고침
+            const refreshRes = await fetch(`/api/v1/instances?instance_id=${instanceId}`);
+            if (refreshRes.ok) {
+                const data = await refreshRes.json();
+                setInstance(data);
+            }
+        } catch (error) {
+            console.error(error);
+            alert("인스턴스 재시작에 실패했습니다.");
+        }
+    };
 
     async function fetchInstanceData() {
         try {
@@ -215,11 +291,54 @@ export default function InstanceInfoPage() {
         }
     }
 
+    function handleDeleteClick(instance: Instance | null) {
+        throw new Error("Function not implemented.");
+    }
+
     return (
         <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-            <header className="mb-8 flex items-center justify-between">
+            <header className="mb-8  justify-between">
                 <div>
-                    <h1 className="text-4xl font-bold tracking-tight">인스턴스 정보</h1>
+                    <div className="flex justify-between gap-2"> <h1 className="text-4xl font-bold tracking-tight">인스턴스 정보</h1>        <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0 hover-lift">
+                                <span className="sr-only">메뉴 열기</span>
+                                작업
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            {instance?.status === 'SHUTOFF' && (
+                                <DropdownMenuItem onClick={(e) => {
+                                    e.stopPropagation();
+                                    startInstance(instance.id);
+                                }}>
+                                    시작
+                                </DropdownMenuItem>
+                            )}
+                            {instance?.status === 'ACTIVE' && (
+                                <DropdownMenuItem onClick={(e) => {
+                                    e.stopPropagation();
+                                    rebootInstance(instance.id);
+                                }}>
+                                    재시작
+                                </DropdownMenuItem>
+                            )}
+                            {instance?.status === 'ACTIVE' && (
+                                <DropdownMenuItem onClick={(e) => {
+                                    e.stopPropagation();
+                                    stopInstance(instance.id);
+                                }}>
+                                    정지
+                                </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(instance);
+                            }}>
+                                삭제
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu></div>
                     <p className="text-muted-foreground mt-2">
                         ID: {instanceId}
                     </p>
@@ -353,12 +472,10 @@ export default function InstanceInfoPage() {
                             <p className="text-muted-foreground">로딩 중...</p>
                         ) : instance ? (
                             <div className="space-y-2">
-                                <p className="text-lg"><strong>ID</strong></p>
-                                <p>{instance.id}</p>
-                                <p className="text-lg"><strong>이름:</strong>{instance.name}</p>
-                                <p className="text-lg"><strong>IP:</strong>{instance.addresses["private-net"][0].addr}</p>
-                                <p className="text-lg"><strong>상태:</strong>{instance.status}</p>
-                                <p className="text-lg"><strong>생성일:</strong>{instance.created}</p>
+                                <p className="text-lg"><strong>이름: </strong>{instance.name}</p>
+                                <p className="text-lg"><strong>IP: </strong>{instance.addresses["private-net"][0].addr}</p>
+                                <p className="text-lg"><strong>상태: </strong>{instance.status}</p>
+                                <p className="text-lg"><strong>생성일: </strong>{instance.created}</p>
                             </div>
                         ) : (
                             <p className="text-sm text-muted-foreground">인스턴스 정보를 불러올 수 없습니다.</p>
