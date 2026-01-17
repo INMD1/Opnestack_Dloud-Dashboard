@@ -82,13 +82,11 @@ export default function InstanceCreatePage() {
     }, []);
 
     const handleCreateInstance = async () => {
-        const portForwardings = [
-            { external_port: 22, internal_port: 22 },
-            ...additionalPorts.map(p => ({
-                external_port: parseInt(p.external, 10),
-                internal_port: parseInt(p.internal, 10)
-            }))
-        ].filter(p => !isNaN(p.external_port) && !isNaN(p.internal_port));
+        const portForwardings = additionalPorts.map(p => ({
+            internal_port: parseInt(p.internal, 10),
+            external_port: parseInt(p.external, 10),
+            protocol: "tcp"
+        })).filter(p => !isNaN(p.external_port) && !isNaN(p.internal_port));
 
         const instanceData = {
             name: instanceName,

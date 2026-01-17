@@ -22,15 +22,17 @@ export function NavMain({
 }) {
     return (
         <SidebarGroup>
-            <SidebarGroupLabel>가상환경 도구</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-xl font-bold">가상환경 도구</SidebarGroupLabel>
             <SidebarGroupContent className="flex flex-col gap-2">
                 <SidebarMenu>
                     {items.map((item) => (
                         <SidebarMenuItem key={item.title}>
                             <Link href={item.url}>
-                                <SidebarMenuButton tooltip={item.title} className="w-full justify-start">
-                                    {item.icon && <item.icon />}
-                                    <span>{item.title}</span>
+                                <SidebarMenuButton tooltip={item.title} className="w-full justify-start mt-4">
+                                    <div>
+                                        {item.icon && <item.icon />}
+                                    </div>
+                                    <span className="text-xl font-bold">{item.title}</span>
                                 </SidebarMenuButton>
                             </Link>
                         </SidebarMenuItem>

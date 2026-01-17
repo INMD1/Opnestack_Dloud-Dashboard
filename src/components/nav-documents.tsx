@@ -38,14 +38,14 @@ export function NavDocuments({
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>문서</SidebarGroupLabel>
+      <SidebarGroupLabel className="text-xl font-bold">문서</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton asChild className="mt-4">
               <a href={item.url}>
                 <item.icon />
-                <span>{item.name}</span>
+                <span className="text-xl font-bold">{item.name}</span>
               </a>
             </SidebarMenuButton>
             <DropdownMenu>
@@ -54,8 +54,8 @@ export function NavDocuments({
                   showOnHover
                   className="data-[state=open]:bg-accent rounded-sm"
                 >
-                  <IconDots />
-                  <span className="sr-only">More</span>
+                  {/* <IconDots />
+                  <span className="sr-only">More</span> */}
                 </SidebarMenuAction>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -82,8 +82,8 @@ export function NavDocuments({
         ))}
         <SidebarMenuItem>
           <SidebarMenuButton className="text-sidebar-foreground/70">
-            <IconDots className="text-sidebar-foreground/70" />
-            <span>More</span>
+            {/* <IconDots className="text-sidebar-foreground/70" />
+            <span>More</span> */}
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>

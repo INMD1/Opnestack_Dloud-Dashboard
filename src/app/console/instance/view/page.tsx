@@ -63,7 +63,7 @@ export default function InstanceViewPage() {
             <header className="mb-8 flex items-center justify-between">
                 <div>
                     <h1 className="text-4xl font-bold tracking-tight">
-                        <span className="gradient-text">인스턴스 목록</span>
+                        <span className="">인스턴스 목록</span>
                     </h1>
                     <p className="text-muted-foreground mt-2">
                         생성된 가상 머신 인스턴스를 확인하고 관리합니다.
@@ -100,6 +100,7 @@ export default function InstanceViewPage() {
                             ) : instances.length > 0 ? (
                                 instances.map((instance) => (
                                     <TableRow
+                                        onClick={() => router.push(`/console/instance/${instance.id}/info`)}
                                         key={instance.id}
                                         className="transition-all duration-200 hover:bg-accent/50 hover:border-l-4 hover:border-primary"
                                     >

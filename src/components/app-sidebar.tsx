@@ -142,7 +142,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="hover:bg-sidebar-accent transition-all duration-300 group"
+              className="hover:bg-sidebar-accent transition-all duration-00 group mt-4 mb-2" 
             >
               <a href="/console" className="flex items-center gap-3">
                 <div className="gradient-primary p-2 rounded-lg">

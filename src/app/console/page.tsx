@@ -80,9 +80,9 @@ function toDonutData(q: Quota) {
 
 // 더 생동감 있는 차트 색상 (oklch 기반)
 const COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))"
+  "#ff2c2c",
+  "",
+  "#009DD1"
 ];
 
 const DonutCard: React.FC<{ title: string; quota: Quota }> = ({ title, quota }) => {
@@ -102,6 +102,7 @@ const DonutCard: React.FC<{ title: string; quota: Quota }> = ({ title, quota }) 
                 startAngle={90}
                 endAngle={-270}
                 isAnimationActive
+
               >
                 {chart.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -126,19 +127,29 @@ export default function ConsolePage() {
   const { data: session, status } = useSession();
   const [message, setMessage] = useState("");
   const [limits, setLimits] = useState<components["schemas"]["QuotaSet"] | null>(null);
+  const [portlimit, setPortlimit] = useState("");
   let isLoading = false
 
   const entries = Object.entries(limits ?? {}).filter(([key]) => !["subnet", "security_group", "floatingip", "port", "router", "security_group_rule"].includes(key)) as [keyof components["schemas"]["QuotaSet"], Quota][];
+
 
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * welcomeMessages.length);
     setMessage(welcomeMessages[randomIndex]);
 
     async function fetchData() {
+
       try {
+        const ress = await fetch("/api/v1/port_forwardings/stats");
+        const dataa = await ress.json();
+        setPortlimit(dataa);
+
         const res = await fetch("/api/v1/limits");
-        const data = await res.json();
+        let data = await res.json();
+
+        data.quotas.port_forwardings.in_use = dataa.total_count;
         setLimits(data.quotas);
+
         isLoading = true
       } catch (error) {
         console.error("Error fetching limits:", error);
@@ -203,9 +214,9 @@ export default function ConsolePage() {
             title="포트포워딩 개수"
             isLoading={isLoading}
           >
-            {limits ? (
+            {portlimit ? (
               <p className="text-3xl font-bold text-gray-800 mt-1">
-                {limits.port_forwardings.in_use} / {limits.port_forwardings.limit}
+                {portlimit.total_count} / {portlimit.limit}
                 <span className="text-xl font-medium text-gray-600"> 개</span>
               </p>
             ) : (
@@ -220,8 +231,7 @@ export default function ConsolePage() {
           >
             {limits ? (
               <div className="flex flex-col">
-                <p className="text-xl font-semibold text-gray-700">{limits.volumes.in_use} 개</p>
-                <p className="text-lg text-gray-500">({limits.gigabytes.in_use} GB)</p>
+                <p className="text-xl font-semibold text-gray-700">{limits.volumes.in_use}개 ({limits.gigabytes.in_use} GB)</p>
               </div>
             ) : (
               <p className="text-xl text-gray-500 mt-1">데이터 없음</p>
