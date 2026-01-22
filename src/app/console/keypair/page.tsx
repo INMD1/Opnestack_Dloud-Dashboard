@@ -167,8 +167,8 @@ export default function KeypairPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="overflow-y-auto max-h-96 my-4">
-            <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto">
-              <code>{privateKey}</code>
+            <pre className="bg-gray-200 p-4 rounded-md overflow-x-auto">
+              <code className="text-black">{privateKey}</code>
             </pre>
           </div>
           <DialogFooter >

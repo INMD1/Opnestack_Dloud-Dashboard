@@ -25,12 +25,6 @@ const welcomeMessages = [
   "환영해요! 즐거운 시간 보내세요 🎉",
 ];
 
-const mockActivity = [
-  { description: "인스턴스 'web-server-01'이 생성되었습니다.", timestamp: "5분 전" },
-  { description: "디스크 'db-data-disk'가 'db-server-01'에 연결되었습니다.", timestamp: "1시간 전" },
-  { description: "포트포워딩 규칙 (8080 -> 80)이 추가되었습니다.", timestamp: "3시간 전" },
-  { description: "인스턴스 'test-instance'가 삭제되었습니다.", timestamp: "1일 전" },
-];
 
 const prettyKey = (key: keyof components["schemas"]["QuotaSet"]) => {
   const map: Record<keyof components["schemas"]["QuotaSet"], string> = {
@@ -128,6 +122,7 @@ export default function ConsolePage() {
   const [message, setMessage] = useState("");
   const [limits, setLimits] = useState<components["schemas"]["QuotaSet"] | null>(null);
   const [portlimit, setPortlimit] = useState("");
+  const [projectlogs, setProjectlogs] = useState([]);
   let isLoading = false
 
   const entries = Object.entries(limits ?? {}).filter(([key]) => !["subnet", "security_group", "floatingip", "port", "router", "security_group_rule"].includes(key)) as [keyof components["schemas"]["QuotaSet"], Quota][];
@@ -140,15 +135,20 @@ export default function ConsolePage() {
     async function fetchData() {
 
       try {
+        const resss = await fetch("/api/v1/projectlogs");
+        const dataaa = await resss.json();
+        setProjectlogs(dataaa.project_logs);
+        console.log(dataaa.project_logs);
         const ress = await fetch("/api/v1/port_forwardings/stats");
         const dataa = await ress.json();
         setPortlimit(dataa);
 
         const res = await fetch("/api/v1/limits");
-        let data = await res.json();
+        const data = await res.json();
 
         data.quotas.port_forwardings.in_use = dataa.total_count;
         setLimits(data.quotas);
+
 
         isLoading = true
       } catch (error) {
@@ -249,17 +249,17 @@ export default function ConsolePage() {
               <CardDescription>계정의 최근 활동 내역입니다.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4 relative">
+              <div className="space-y-4 relative overflow-auto h-[20vh]">
                 {/* 타임라인 세로선 */}
                 <div className="absolute left-[18px] top-0 bottom-0 w-[2px] bg-gradient-to-b from-primary via-accent to-transparent" />
-                {mockActivity.map((activity, index) => (
+                {projectlogs.map((activity, index) => (
                   <div key={index} className="flex items-start gap-4 relative transition-all duration-300 hover:translate-x-2">
                     <div className="gradient-primary rounded-full p-2 z-10 ring-4 ring-background">
                       <FaRegClock className="h-4 w-4 text-white" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">{activity.description}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{activity.timestamp}</p>
+                      <p className="text-sm font-medium">{activity.message}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{activity.created_at}</p>
                     </div>
                   </div>
                 ))}

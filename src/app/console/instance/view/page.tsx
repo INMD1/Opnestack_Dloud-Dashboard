@@ -34,29 +34,29 @@ import { useRouter } from "next/navigation";
 
 //데이터 예제
 
-export const statusStyles: Record<string, string> = {
-  ACTIVE: "bg-green-100 text-green-800 border-green-200 hover:bg-green-100",
+const statusStyles: Record<string, string> = {
+    ACTIVE: "bg-green-100 text-green-800 border-green-200 hover:bg-green-100",
 
-  BUILD: "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100",
-  REBUILD: "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100",
-  RESIZE: "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100",
-  MIGRATING: "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100",
+    BUILD: "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100",
+    REBUILD: "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100",
+    RESIZE: "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100",
+    MIGRATING: "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100",
 
-  REBOOT: "bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-100",
-  HARD_REBOOT: "bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-100",
+    REBOOT: "bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-100",
+    HARD_REBOOT: "bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-100",
 
-  PAUSED: "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100",
-  SHUTOFF: "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100",
-  SUSPENDED: "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100",
-  SHELVED: "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100",
-  SHELVED_OFFLOADED: "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100",
+    PAUSED: "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100",
+    SHUTOFF: "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100",
+    SUSPENDED: "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100",
+    SHELVED: "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100",
+    SHELVED_OFFLOADED: "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100",
 
-  RESCUE: "bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-100",
+    RESCUE: "bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-100",
 
-  ERROR: "bg-red-100 text-red-800 border-red-200 hover:bg-red-100",
-  SOFT_DELETED: "bg-red-100 text-red-800 border-red-200 hover:bg-red-100",
+    ERROR: "bg-red-100 text-red-800 border-red-200 hover:bg-red-100",
+    SOFT_DELETED: "bg-red-100 text-red-800 border-red-200 hover:bg-red-100",
 
-  UNKNOWN: "bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-100",
+    UNKNOWN: "bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-100",
 };
 
 

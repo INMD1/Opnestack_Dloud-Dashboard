@@ -473,7 +473,7 @@ export default function InstanceInfoPage() {
                         ) : instance ? (
                             <div className="space-y-2">
                                 <p className="text-lg"><strong>이름: </strong>{instance.name}</p>
-                                <p className="text-lg"><strong>IP: </strong>{instance.addresses["private-net"][0].addr}</p>
+                                <p className="text-lg"><strong>내부 IP: </strong>{instance.addresses["private-net"][0].addr}</p>
                                 <p className="text-lg"><strong>상태: </strong>{instance.status}</p>
                                 <p className="text-lg"><strong>생성일: </strong>{instance.created}</p>
                             </div>

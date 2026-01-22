@@ -1,7 +1,6 @@
 "use client"
 
 import {
-  IconDots,
   IconFolder,
   IconShare3,
   IconTrash,

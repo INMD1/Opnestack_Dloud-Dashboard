@@ -67,7 +67,7 @@ export default function InstanceCreatePage() {
                 }
                 if (networksRes && networksRes.networks) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const filteredNetworks = networksRes.networks.filter((network: any) => network.name !== 'external');
+                    const filteredNetworks = networksRes.networks.filter((network: any) => network.name === 'private-net');
                     setNetworks(filteredNetworks);
                     if (filteredNetworks.length > 0) setSelectedNetwork(filteredNetworks[0].id!);
                 }
@@ -169,7 +169,7 @@ export default function InstanceCreatePage() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-h-[200px] overflow-y-auto pr-2">
                                 {loading ? (
                                     <p>성능 옵션을 불러오는 중입니다...</p>
                                 ) : flavors.length > 0 ? (

@@ -33,17 +33,17 @@ import { Label } from "@/components/ui/label";
 import { components } from "@/lib/skyline-api";
 
 interface PortForward {
-  internal_ip_address: string;
-  id: string;
-  external_port: number;
-  internal_port: number;
-  instance_name: string;
-  internal_ip: string;
+    internal_ip_address: string;
+    id: string;
+    external_port: number;
+    internal_port: number;
+    instance_name: string;
+    internal_ip: string;
 }
 
 interface OriginData {
-  fixed_ips?: Array<{ ip_address: string }>;
-  device_owner?: string;
+    fixed_ips?: Array<{ ip_address: string }>;
+    device_owner?: string;
 }
 
 export default function NetworkViewPage() {
@@ -72,10 +72,9 @@ export default function NetworkViewPage() {
             }
 
             if (portForwardsRes) {
-                console.log(portForwardsRes);
-                
                 setPortForwards(portForwardsRes.port_forwardings || []);
             }
+            
         } catch (error) {
             console.error("Failed to fetch network data", error);
         }
@@ -200,7 +199,7 @@ export default function NetworkViewPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>포트 포워딩 규칙</CardTitle>
-                        <CardDescription>외부 포트와 인스턴스 내부 포트를 연결하는 규칙입니다.</CardDescription>
+                        <CardDescription>외부 포트와 인스턴스 내부 포트를 연결하는 규칙입니다.(SSH는 표기 제외)</CardDescription>
                     </CardHeader>
                     <CardContent className="px-5">
                         <PortForwardTable portForwards={portForwards} loading={loading} />
@@ -259,7 +258,7 @@ function PortForwardTable({ portForwards, loading }: { portForwards: PortForward
                 <TableRow>
                     <TableHead>외부 포트</TableHead>
                     <TableHead>내부 포트</TableHead>
-   
+
                     <TableHead>대상 내부 IP</TableHead>
                     <TableHead className="text-right pr-6">작업</TableHead>
                 </TableRow>

@@ -51,7 +51,7 @@ export default function RegisterPage() {
         setError(null);
 
         try {
-            const res = await fetch("/api/v1/signup", {
+            const res = await fetch("/api/verfi", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -68,13 +68,13 @@ export default function RegisterPage() {
             const result = await res.json();
 
             if (!res.ok) {
-                setError(result.message || "회원가입에 실패했습니다.");
+                setError(result.error || "회원가입에 실패했습니다.");
                 setIsLoading(false);
                 return;
             }
 
-            // 회원가입 성공 시 로그인 페이지로 이동
-            alert("회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.");
+            // 이메일 전송 성공
+            alert(`인증 이메일이 ${data.email}로 전송되었습니다.\n\n이메일을 확인하여 인증을 완료해주세요.`);
             router.push("/auth/login");
         } catch (err) {
             console.error("Signup error:", err);

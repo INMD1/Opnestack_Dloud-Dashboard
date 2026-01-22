@@ -3,7 +3,7 @@ import { getSkylineClient } from "@/lib/skyline";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
-function jsonResponse(data: any, status = 200) {
+function jsonResponse(data: unknown, status = 200) {
     return new NextResponse(JSON.stringify(data), {
         status,
         headers: { "Content-Type": "application/json" },
@@ -15,7 +15,7 @@ export async function DELETE(req: NextRequest) {
         const volumeName = req.nextUrl.searchParams.get("volume_name");
 
         if (!volumeName) {
-            return  jsonResponse({ message: "Missing volume_name" }, 400);
+            return jsonResponse({ message: "Missing volume_name" }, 400);
         }
 
         const session = await getServerSession(authOptions);
