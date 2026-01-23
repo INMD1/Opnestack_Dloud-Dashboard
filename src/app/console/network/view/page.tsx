@@ -82,7 +82,7 @@ export default function NetworkViewPage() {
                 if (data && data.servers) {
                     setInstances(data.servers);
                 }
-                setInstancesName(data.servers.map((data: { name: any; }) => data.name));
+                setInstancesName(data.servers.map((data: { name: string; }) => data.name));
             } catch (error) {
                 console.error(error);
             }
@@ -145,7 +145,12 @@ export default function NetworkViewPage() {
 
         try {
             // 요청 body 생성
-            const requestBody: any = {
+            const requestBody: {
+                internal_ip: string;
+                internal_port: number;
+                protocol: string;
+                external_port?: number;
+            } = {
                 internal_ip: internalIp,
                 internal_port: parseInt(internalPort, 10),
                 protocol: protocol,

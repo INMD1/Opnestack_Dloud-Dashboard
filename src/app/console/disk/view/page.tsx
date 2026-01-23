@@ -93,7 +93,7 @@ export default function DiskViewPage() {
             const data = await res.json();
             if (data && data.servers) {
                 setInstances(data.servers);
-                setInstancesName(data.servers.map((s: { name: any; }) => s.name));
+                setInstancesName(data.servers.map((s: { name: string; }) => s.name));
             }
         } catch (error) {
             console.error(error);
