@@ -28,6 +28,14 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+    Combobox,
+    ComboboxContent,
+    ComboboxEmpty,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
+} from "@/components/ui/combobox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,6 +52,14 @@ export default function DiskViewPage() {
     const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
     const [newDiskName, setNewDiskName] = useState("");
     const [newDiskSize, setNewDiskSize] = useState("");
+
+    // 연결/분리 다이얼로그 상태
+    const [isAttachDialogOpen, setAttachDialogOpen] = useState(false);
+    const [isDetachDialogOpen, setDetachDialogOpen] = useState(false);
+    const [selectedDiskForAction, setSelectedDiskForAction] = useState<components["schemas"]["VolumesResponseBase"] | null>(null);
+    const [selectedInstanceId, setSelectedInstanceId] = useState("");
+    const [instances, setInstances] = useState<components["schemas"]["ServersResponseBase"][]>([]);
+    const [instancesName, setInstancesName] = useState<string[]>([]);
 
     // 삭제 다이얼로그 상태 관리
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -67,8 +83,26 @@ export default function DiskViewPage() {
         setLoading(false);
     }
 
+    // 인스턴스 목록 가져오기
+    async function fetchInstances() {
+        try {
+            const res = await fetch("/api/v1/extension/servers");
+            if (!res.ok) {
+                throw new Error("Failed to fetch instances");
+            }
+            const data = await res.json();
+            if (data && data.servers) {
+                setInstances(data.servers);
+                setInstancesName(data.servers.map((s: { name: any; }) => s.name));
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
     useEffect(() => {
         fetchDisks();
+        fetchInstances();
     }, []);
 
     const handleCreateDisk = async () => {
@@ -89,10 +123,8 @@ export default function DiskViewPage() {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    volume: {
-                        name: newDiskName,
-                        size: size,
-                    },
+                    name: newDiskName,
+                    size: size,
                 }),
             });
 
@@ -175,6 +207,97 @@ export default function DiskViewPage() {
         }
     };
 
+    // 연결 다이얼로그 열기
+    const handleAttachClick = (disk: components["schemas"]["VolumesResponseBase"]) => {
+        setSelectedDiskForAction(disk);
+        setSelectedInstanceId("");
+        setAttachDialogOpen(true);
+    };
+
+    // 분리 다이얼로그 열기
+    const handleDetachClick = (disk: components["schemas"]["VolumesResponseBase"]) => {
+        setSelectedDiskForAction(disk);
+        setDetachDialogOpen(true);
+    };
+
+    // 디스크 연결 실행
+    const handleAttachDisk = async () => {
+        if (!selectedDiskForAction || !selectedInstanceId) {
+            alert("인스턴스를 선택해주세요.");
+            return;
+        }
+
+        const selectedInstance = instances.find(inst => inst.name === selectedInstanceId);
+        if (!selectedInstance) {
+            alert("선택한 인스턴스를 찾을 수 없습니다.");
+            return;
+        }
+
+        try {
+            const res = await fetch("/api/v1/volumes/attach", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    volume_id: selectedDiskForAction.id,
+                    server_id: selectedInstance.id,
+                }),
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.message || "Failed to attach disk");
+            }
+
+            alert("디스크가 인스턴스에 성공적으로 연결되었습니다.");
+            setAttachDialogOpen(false);
+            setSelectedDiskForAction(null);
+            setSelectedInstanceId("");
+            fetchDisks();
+        } catch (error) {
+            console.error(error);
+            alert(`디스크 연결에 실패했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+        }
+    };
+
+    // 디스크 분리 실행
+    const handleDetachDisk = async () => {
+        if (!selectedDiskForAction) return;
+
+        const attachment = selectedDiskForAction.attachments?.[0];
+        if (!attachment) {
+            alert("연결된 인스턴스 정보를 찾을 수 없습니다.");
+            return;
+        }
+
+        try {
+            const res = await fetch("/api/v1/volumes/detach", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    volume_id: selectedDiskForAction.id,
+                    server_id: attachment.server_id,
+                }),
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.message || "Failed to detach disk");
+            }
+
+            alert("디스크가 인스턴스에서 성공적으로 분리되었습니다.");
+            setDetachDialogOpen(false);
+            setSelectedDiskForAction(null);
+            fetchDisks();
+        } catch (error) {
+            console.error(error);
+            alert(`디스크 분리에 실패했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+        }
+    };
+
     const availableDisks = disks.filter(d => d.status === 'available');
     const attachedDisks = disks.filter(d => d.status === 'in-use');
 
@@ -224,10 +347,22 @@ export default function DiskViewPage() {
                     <TabsTrigger value="available">사용 가능한 디스크</TabsTrigger>
                 </TabsList>
                 <TabsContent value="attached">
-                    <DiskTable disks={attachedDisks} loading={loading} onDelete={handleDeleteClick} />
+                    <DiskTable
+                        disks={attachedDisks}
+                        loading={loading}
+                        onDelete={handleDeleteClick}
+                        onAttach={handleAttachClick}
+                        onDetach={handleDetachClick}
+                    />
                 </TabsContent>
                 <TabsContent value="available">
-                    <DiskTable disks={availableDisks} loading={loading} onDelete={handleDeleteClick} />
+                    <DiskTable
+                        disks={availableDisks}
+                        loading={loading}
+                        onDelete={handleDeleteClick}
+                        onAttach={handleAttachClick}
+                        onDetach={handleDetachClick}
+                    />
                 </TabsContent>
             </Tabs>
 
@@ -300,14 +435,92 @@ export default function DiskViewPage() {
                     )}
                 </DialogContent>
             </Dialog>
+
+            {/* 디스크 연결 다이얼로그 */}
+            <Dialog open={isAttachDialogOpen} onOpenChange={setAttachDialogOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>인스턴스에 디스크 연결</DialogTitle>
+                        <DialogDescription>
+                            <strong>{selectedDiskForAction?.name}</strong> 디스크를 연결할 인스턴스를 선택하세요.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label className="text-right">인스턴스</Label>
+                            <div className="col-span-3">
+                                <Combobox
+                                    items={instancesName}
+                                    value={selectedInstanceId}
+                                    onValueChange={(value) => {
+                                        if (value && typeof value === 'string') {
+                                            setSelectedInstanceId(value);
+                                        }
+                                    }}
+                                >
+                                    <ComboboxInput placeholder="인스턴스 선택" />
+                                    <ComboboxContent>
+                                        <ComboboxEmpty>인스턴스를 찾을 수 없습니다.</ComboboxEmpty>
+                                        <ComboboxList>
+                                            {(item) => (
+                                                <ComboboxItem key={item} value={item}>
+                                                    {item}
+                                                </ComboboxItem>
+                                            )}
+                                        </ComboboxList>
+                                    </ComboboxContent>
+                                </Combobox>
+                            </div>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setAttachDialogOpen(false)}>취소</Button>
+                        <Button onClick={handleAttachDisk}>연결</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* 디스크 분리 다이얼로그 */}
+            <Dialog open={isDetachDialogOpen} onOpenChange={setDetachDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <div className="flex items-center gap-2">
+                            <AlertTriangle className="h-5 w-5 text-orange-500" />
+                            <DialogTitle>인스턴스에서 디스크 분리</DialogTitle>
+                        </div>
+                    </DialogHeader>
+                    <div className="pt-2 text-sm text-muted-foreground">
+                        <strong className="text-foreground">{selectedDiskForAction?.name}</strong> 디스크를{' '}
+                        <strong className="text-foreground">{selectedDiskForAction?.attachments?.[0]?.server_name}</strong> 인스턴스에서 분리하시겠습니까?
+                    </div>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setDetachDialogOpen(false)}
+                        >
+                            취소
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={handleDetachDisk}
+                        >
+                            분리
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
 
-function DiskTable({ disks, loading, onDelete }: {
+function DiskTable({ disks, loading, onDelete, onAttach, onDetach }: {
     disks: components["schemas"]["VolumesResponseBase"][],
     loading: boolean,
-    onDelete: (disk: components["schemas"]["VolumesResponseBase"]) => void
+    onDelete: (disk: components["schemas"]["VolumesResponseBase"]) => void,
+    onAttach: (disk: components["schemas"]["VolumesResponseBase"]) => void,
+    onDetach: (disk: components["schemas"]["VolumesResponseBase"]) => void
 }) {
     return (
         <Card className="mt-4">
@@ -344,8 +557,22 @@ function DiskTable({ disks, loading, onDelete }: {
                                                 <Button variant="ghost" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                {disk.status === 'available' && <DropdownMenuItem>인스턴스에 연결</DropdownMenuItem>}
-                                                {disk.status === 'in-use' && <DropdownMenuItem>인스턴스에서 분리</DropdownMenuItem>}
+                                                {disk.status === 'available' && (
+                                                    <DropdownMenuItem onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onAttach(disk);
+                                                    }}>
+                                                        인스턴스에 연결
+                                                    </DropdownMenuItem>
+                                                )}
+                                                {disk.status === 'in-use' && (
+                                                    <DropdownMenuItem onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onDetach(disk);
+                                                    }}>
+                                                        인스턴스에서 분리
+                                                    </DropdownMenuItem>
+                                                )}
                                                 <DropdownMenuItem
                                                     className="text-red-600 focus:text-red-600"
                                                     onClick={(e) => {

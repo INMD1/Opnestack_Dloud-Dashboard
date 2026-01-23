@@ -123,7 +123,7 @@ const data = {
     },
     {
       name: "도움말",
-      url: "#",
+      url: "https://docs.dcloud.p-e.kr/",
       icon: IconFileDots,
     },
     {
