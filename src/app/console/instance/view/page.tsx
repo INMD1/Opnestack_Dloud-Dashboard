@@ -263,9 +263,16 @@ export default function InstanceViewPage() {
                             ) : instances.length > 0 ? (
                                 instances.map((instance) => (
                                     <TableRow
-                                        onClick={() => router.push(`/console/instance/${instance.id}/info`)}
+                                        onClick={() => {
+                                            if (instance.status !== 'BUILD') {
+                                                router.push(`/console/instance/${instance.id}/info`);
+                                            }
+                                        }}
                                         key={instance.id}
-                                        className="transition-all duration-200 hover:bg-accent/50 hover:border-l-4 hover:border-primary"
+                                        className={`transition-all duration-200 ${instance.status === 'BUILD'
+                                                ? 'opacity-50 cursor-not-allowed bg-muted/50'
+                                                : 'hover:bg-accent/50 hover:border-l-4 hover:border-primary cursor-pointer'
+                                            }`}
                                     >
                                         <TableCell className="font-medium">{instance.name}</TableCell>
                                         <TableCell>
@@ -279,7 +286,7 @@ export default function InstanceViewPage() {
                                         <TableCell className="text-right">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" className="h-8 w-8 p-0 hover-lift">
+                                                    <Button variant="ghost" className="h-8 w-8 p-0 hover-lift" disabled={instance.status === 'BUILD'}>
                                                         <span className="sr-only">메뉴 열기</span>
                                                         <MoreHorizontal className="h-4 w-4" />
                                                     </Button>
