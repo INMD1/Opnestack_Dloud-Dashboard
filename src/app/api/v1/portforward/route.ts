@@ -10,30 +10,52 @@ export async function POST(req: NextRequest) {
             return new NextResponse(JSON.stringify({ message: "Unauthorized" }), { status: 401 });
         }
 
-        const { instance_ip, external_port, internal_port } = await req.json();
+        const body = await req.json();
 
-        if (!instance_ip || !external_port || !internal_port) {
-            return new NextResponse(JSON.stringify({ message: "Missing required parameters: instance_ip, external_port, internal_port" }), { status: 400 });
+        // Basic validation - let backend handle detailed validation
+        if (!body.user_vm_internal_ip || !body.user_vm_internal_port || !body.user_vm_id) {
+            return new NextResponse(JSON.stringify({ message: "Missing required parameters" }), { status: 400 });
         }
 
         const skylineClient = getSkylineClient(session.keystone_token);
-        // Assuming Skyline API has an endpoint for port forwarding
         const { data, error } = await skylineClient.POST("/api/v1/portforward", {
-            body: {
-                instance_ip,
-                external_port,
-                internal_port,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } as any,
+            body: body as any,
         });
 
         if (error) {
-            return new NextResponse(JSON.stringify(error), { status: 500 });
+            console.error("Backend error:", error);
+            // Propagate backend error message if available
+            const errorMessage = (error as any).detail || (error as any).message || "Port Forward API failed";
+            return new NextResponse(JSON.stringify({ message: errorMessage }), { status: 500 });
         }
 
         return new NextResponse(JSON.stringify(data), { status: 201 });
     } catch (err) {
         console.error("Port Forward API error:", err);
-        return new NextResponse(JSON.stringify({ message: "Port Forward API failed" }), { status: 500 });
+        return new NextResponse(JSON.stringify({ message: "Port Forward API failed in Dashboard" }), { status: 500 });
+    }
+}
+
+export async function GET(req: NextRequest) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session?.keystone_token) {
+            return new NextResponse(JSON.stringify({ message: "Unauthorized" }), { status: 401 });
+        }
+
+        const skylineClient = getSkylineClient(session.keystone_token);
+        // Cast to any to bypass outdated type definition (backend supports GET but types say never)
+        const { data, error } = await (skylineClient as any).GET("/api/v1/portforward");
+
+        if (error) {
+            console.error("Backend error:", error);
+            const errorMessage = (error as any).detail || (error as any).message || "Port Forward API failed";
+            return new NextResponse(JSON.stringify({ message: errorMessage }), { status: 500 });
+        }
+
+        return new NextResponse(JSON.stringify(data), { status: 200 });
+    } catch (err) {
+        console.error("Port Forward API error:", err);
+        return new NextResponse(JSON.stringify({ message: "Port Forward API failed in Dashboard" }), { status: 500 });
     }
 }

@@ -35,12 +35,17 @@ import { Label } from "@/components/ui/label";
 import { components } from "@/lib/skyline-api";
 
 interface PortForward {
-    internal_ip_address: string;
-    id: string;
-    external_port: number;
-    internal_port: number;
-    instance_name: string;
-    internal_ip: string;
+    id: number;
+    rule_id: string;
+    rule_name: string;
+    user_vm_id: string;
+    user_vm_name: string;
+    user_vm_internal_ip: string;
+    user_vm_internal_port: number;
+    proxy_external_ip: string;
+    proxy_external_port: number;
+    protocol: string;
+    status: string;
 }
 
 interface OriginData {
@@ -95,7 +100,7 @@ export default function NetworkViewPage() {
         try {
             const [portsRes, portForwardsRes, limitsRes] = await Promise.all([
                 fetch("/api/v1/extension/ports").then(res => res.json()),
-                fetch("/api/v1/port_forwardings/stats").then(res => res.json()),
+                fetch("/api/v1/portforward").then(res => res.json()),
                 fetch("/api/v1/limits").then(res => res.json())
             ]);
 
@@ -104,7 +109,7 @@ export default function NetworkViewPage() {
             }
 
             if (portForwardsRes) {
-                setPortForwards(portForwardsRes.port_forwardings || []);
+                setPortForwards(portForwardsRes || []);
             }
 
             if (limitsRes) {
@@ -146,22 +151,30 @@ export default function NetworkViewPage() {
         try {
             // 요청 body 생성
             const requestBody: {
-                internal_ip: string;
-                internal_port: number;
+                rule_name: string;
+                user_vm_id: string;
+                user_vm_name: string;
+                user_vm_internal_ip: string;
+                user_vm_internal_port: number;
                 protocol: string;
-                external_port?: number;
+                service_type: string;
+                proxy_external_port?: number;
             } = {
-                internal_ip: internalIp,
-                internal_port: parseInt(internalPort, 10),
+                rule_name: `pf-${internalIp}-${internalPort}`,
+                user_vm_id: instances.find(i => i.name === selectedInstanceName)?.id || "unknown",
+                user_vm_name: selectedInstanceName,
+                user_vm_internal_ip: internalIp,
+                user_vm_internal_port: parseInt(internalPort, 10),
                 protocol: protocol,
+                service_type: parseInt(internalPort, 10) === 22 ? "ssh" : "other"
             };
 
             // 수동 모드일 때만 external_port 포함
             if (externalPortMode === "manual") {
-                requestBody.external_port = parseInt(externalPort, 10);
+                requestBody.proxy_external_port = parseInt(externalPort, 10);
             }
 
-            const res = await fetch("/api/v1/port_forwardings", {
+            const res = await fetch("/api/v1/portforward", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -194,14 +207,11 @@ export default function NetworkViewPage() {
 
         setIsDeleting(true);
         try {
-            const res = await fetch("/api/v1/port_forwardings", {
+            const res = await fetch(`/api/v1/portforward/${deletingPortForward.rule_id}`, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({
-                    id: deletingPortForward.id,
-                }),
             });
 
             if (!res.ok) {
@@ -383,15 +393,15 @@ export default function NetworkViewPage() {
                                 <div className="space-y-2">
                                     <div className="flex justify-between">
                                         <span className="text-sm font-medium">외부 포트:</span>
-                                        <span className="text-sm">{deletingPortForward.external_port}</span>
+                                        <span className="text-sm">{deletingPortForward.proxy_external_port}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-sm font-medium">내부 포트:</span>
-                                        <span className="text-sm">{deletingPortForward.internal_port}</span>
+                                        <span className="text-sm">{deletingPortForward.user_vm_internal_port}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-sm font-medium">내부 IP:</span>
-                                        <span className="text-sm font-mono">{deletingPortForward.internal_ip_address}</span>
+                                        <span className="text-sm font-mono">{deletingPortForward.user_vm_internal_ip}</span>
                                     </div>
                                 </div>
                             </div>
@@ -482,9 +492,9 @@ function PortForwardTable({ portForwards, loading, onDelete }: { portForwards: P
                     <TableRow><TableCell colSpan={4} className="text-center h-24 text-muted-foreground">포트 포워딩 규칙이 없습니다.</TableCell></TableRow>
                 ) : portForwards.map(pf => (
                     <TableRow key={pf.id}>
-                        <TableCell className="font-medium">{pf.external_port}</TableCell>
-                        <TableCell>{pf.internal_port}</TableCell>
-                        <TableCell className="font-mono">{pf.internal_ip_address}</TableCell>
+                        <TableCell className="font-medium">{pf.proxy_external_port}</TableCell>
+                        <TableCell>{pf.user_vm_internal_port}</TableCell>
+                        <TableCell className="font-mono">{pf.user_vm_internal_ip}</TableCell>
                         <TableCell className="text-right">
                             <Button
                                 variant="ghost"

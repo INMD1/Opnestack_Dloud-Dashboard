@@ -8,18 +8,12 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import {
-  IconCamera,
   IconChartBar,
   IconDashboard,
-  IconFileAi,
-  IconFileDescription,
   IconBellExclamation,
-  IconHelp,
   IconInnerShadowTop,
   IconListDetails,
   IconFileDots,
-  IconSearch,
-  IconSettings,
   IconKey
 } from "@tabler/icons-react"
 import { NavMain } from "./nav-main"
@@ -50,75 +44,10 @@ const data = {
       icon: IconKey,
     },
   ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-  ],
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: IconSettings,
-    },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
-    },
-  ],
   documents: [
     {
       name: "서버 현황",
-      url: "#",
+      url: "https://dcloudkuma.devmultid.org/status/dcloudinfra",
       icon: IconFileDots,
     },
     {

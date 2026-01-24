@@ -17,13 +17,17 @@ import {
 } from "@/components/ui/accordion"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 interface PortForwarding {
-    id: string;
-    floating_ip_id: string;
-    floating_ip_address: string;
-    internal_ip_address: string;
-    internal_port: number;
-    external_port: number;
+    id: number;
+    rule_id: string;
+    rule_name: string;
+    user_vm_id: string;
+    user_vm_name: string;
+    user_vm_internal_ip: string;
+    user_vm_internal_port: number;
+    proxy_external_ip: string;
+    proxy_external_port: number;
     protocol: string;
+    status: string;
 }
 import {
     DropdownMenu,
@@ -60,8 +64,21 @@ export default function InstanceInfoPage() {
 
     useEffect(() => {
         fetchInstanceData();
+        fetchPortForwardings();
         fetchNovnc();
     }, [instanceId]);
+
+    async function fetchPortForwardings() {
+        try {
+            const res = await fetch(`/api/v1/portforward/vm/${instanceId}`);
+            if (res.ok) {
+                const data = await res.json();
+                setPortForwardings(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch port forwardings:", error);
+        }
+    }
 
     // 인스턴스 시작
     const startInstance = async (instanceId: string) => {
@@ -142,7 +159,7 @@ export default function InstanceInfoPage() {
             }
             const data = await res.json();
             setInstance(data);
-            setPortForwardings(data.port_forwardings || []);
+            // setPortForwardings(data.port_forwardings || []); // Removed: fetching separately
             console.log(data);
             // Internal IP 추출
             if (data.addresses["private-net"][0].addr && data.addresses["private-net"][0].addr.length > 0) {
@@ -178,7 +195,7 @@ export default function InstanceInfoPage() {
                 throw new Error("Failed to fetch novnc");
             }
             const data = await res.json();
-            setNovnc(data["remote_console"]?.url || "");
+            setNovnc(data["remote_console"]?.url ? (() => { const u = new URL(data["remote_console"].url); u.hostname = process.env.NEXT_PUBLIC_NOVNC ?? ""; u.protocol = "http:"; return u.toString(); })() : "");
         } catch (error) {
             console.error(error);
         }
@@ -206,13 +223,17 @@ export default function InstanceInfoPage() {
         setIsAdding(true);
         try {
             const body = {
-                internal_ip: internalIp,
-                internal_port: parseInt(internalPort),
-                external_port: externalPort ? parseInt(externalPort) : null, // null이면 자동 할당
+                rule_name: `pf-${instanceId.substring(0, 8)}-${internalPort}`,
+                user_vm_id: instanceId,
+                user_vm_name: instance?.name || "unknown",
+                user_vm_internal_ip: internalIp,
+                user_vm_internal_port: parseInt(internalPort),
+                proxy_external_port: externalPort ? parseInt(externalPort) : null,
                 protocol: protocol,
+                service_type: parseInt(internalPort) === 22 ? "ssh" : "other"
             };
 
-            const res = await fetch("/api/v1/port_forwardings", {
+            const res = await fetch("/api/v1/portforward", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -236,9 +257,10 @@ export default function InstanceInfoPage() {
             setInternalPort("");
             setExternalPort("");
             setProtocol("tcp");
-
+            window.location.reload();
             // 인스턴스 데이터 다시 불러오기
             fetchInstanceData();
+
         } catch (error: unknown) {
             console.error(error);
             toaster.create({
@@ -252,20 +274,16 @@ export default function InstanceInfoPage() {
     }
 
     async function handleDeletePortForwarding(pf: PortForwarding) {
-        if (!confirm(`포트포워딩 ${pf.external_port} -> ${pf.internal_port}을(를) 삭제하시겠습니까?`)) {
+        if (!confirm(`포트포워딩 ${pf.proxy_external_port} -> ${pf.user_vm_internal_port}을(를) 삭제하시겠습니까?`)) {
             return;
         }
 
         try {
-            const res = await fetch("/api/v1/port_forwardings", {
+            const res = await fetch(`/api/v1/portforward/${pf.rule_id}`, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({
-                    floating_ip_id: pf.floating_ip_id,
-                    pf_id: pf.id,
-                }),
             });
 
             if (res.status !== 204) {
@@ -279,8 +297,8 @@ export default function InstanceInfoPage() {
                 type: "success",
             });
 
-            // 인스턴스 데이터 다시 불러오기
-            fetchInstanceData();
+            // 목록 새로고침
+            fetchPortForwardings();
         } catch (error: unknown) {
             console.error(error);
             toaster.create({
@@ -377,10 +395,10 @@ export default function InstanceInfoPage() {
                                             {portForwardings.map((pf) => (
                                                 <TableRow key={pf.id}>
                                                     <TableCell className="font-mono text-sm">
-                                                        {pf.floating_ip_address}
+                                                        {pf.proxy_external_ip}
                                                     </TableCell>
-                                                    <TableCell>{pf.external_port}</TableCell>
-                                                    <TableCell>{pf.internal_port}</TableCell>
+                                                    <TableCell>{pf.proxy_external_port}</TableCell>
+                                                    <TableCell>{pf.user_vm_internal_port}</TableCell>
                                                     <TableCell>{pf.protocol.toUpperCase()}</TableCell>
                                                     <TableCell>
                                                         <Button

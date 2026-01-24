@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
         const emailDomain = email.split('@')[1];
         if (emailDomain !== 'office.deu.ac.kr') {
             return NextResponse.json(
-                { error: "동서대학교 이메일(office.deu.ac.kr)만 사용 가능합니다." },
+                { error: "동의대학교 이메일(office.deu.ac.kr)만 사용 가능합니다." },
                 { status: 400 }
             );
         }
