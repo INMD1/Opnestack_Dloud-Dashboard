@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, Plus, Terminal, MoreHorizontal } from "lucide-react";
+import { Trash2, Plus, Terminal } from "lucide-react";
 import { toaster } from "@/components/ui/toaster";
 import {
     Accordion,
@@ -309,7 +309,7 @@ export default function InstanceInfoPage() {
         }
     }
 
-    function handleDeleteClick(instance: Instance | null) {
+    function handleDeleteClick(_instance: Instance | null) {
         throw new Error("Function not implemented.");
     }
 

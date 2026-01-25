@@ -2,7 +2,7 @@
 // @ts-nocheck
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useSession } from "next-auth/react";
 
@@ -118,12 +118,12 @@ const DonutCard: React.FC<{ title: string; quota: Quota }> = ({ title, quota }) 
 
 export default function ConsolePage() {
 
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const [message, setMessage] = useState("");
   const [limits, setLimits] = useState<components["schemas"]["QuotaSet"] | null>(null);
   const [portlimit, setPortlimit] = useState("");
   const [projectlogs, setProjectlogs] = useState([]);
-  let isLoading = false
+  const isLoadingRef = useRef(false);
 
   const entries = Object.entries(limits ?? {}).filter(([key]) => !["subnet", "security_group", "floatingip", "port", "router", "security_group_rule"].includes(key)) as [keyof components["schemas"]["QuotaSet"], Quota][];
 
@@ -150,7 +150,7 @@ export default function ConsolePage() {
         setLimits(data.quotas);
 
 
-        isLoading = true
+        isLoadingRef.current = true;
       } catch (error) {
         console.error("Error fetching limits:", error);
       }
@@ -271,7 +271,7 @@ export default function ConsolePage() {
       <section>
         <h2 className="text-2xl font-bold mb-4">계정 한도 및 최근 활동</h2>
         <div className="">
-          {isLoading ? (
+          {isLoadingRef.current ? (
             <p>계정 한도 정보를 불러오는 중입니다...</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">

@@ -57,7 +57,7 @@ export async function DELETE(req: NextRequest) {
 
         const body = await req.json();
         const skylineClient = getSkylineClient(session.keystone_token);
-        const { data, error } = await skylineClient.DELETE("/api/v1/port_forwardings", { body });
+        const { error } = await skylineClient.DELETE("/api/v1/port_forwardings", { body });
 
         if (error) {
             return new NextResponse(JSON.stringify(error), { status: 500 });

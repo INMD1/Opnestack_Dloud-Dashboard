@@ -5,7 +5,7 @@ import { getSkylineClient } from "@/lib/skyline";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
         if (!session?.keystone_token) {

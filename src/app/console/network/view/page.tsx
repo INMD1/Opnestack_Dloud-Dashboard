@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import { MoreHorizontal, PlusCircle, Trash2 } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -72,7 +72,7 @@ export default function NetworkViewPage() {
     const [internalPort, setInternalPort] = useState("");
     const [externalPort, setExternalPort] = useState("");
     const [externalPortMode, setExternalPortMode] = useState<"auto" | "manual">("auto");
-    const [protocol, setProtocol] = useState("tcp");
+    const [protocol] = useState("tcp");
     const [instances, setInstances] = useState<components["schemas"]["ServersResponseBase"][]>([]);
     const [instancesName, setInstancesName] = useState<string[]>([]);
 

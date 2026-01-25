@@ -176,7 +176,7 @@ export async function POST(req: NextRequest) {
                 },
                 { status: 200 }
             );
-        } catch (error) {
+        } catch (_error) {
             // 에러 나면 방금 넣은 토큰과 임시 사용자 정보 삭제
             await db
                 .delete(verifiactionToken)

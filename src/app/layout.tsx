@@ -19,6 +19,7 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning className={inter.variable}>
       <head>
+        <title>DCloud-동의대학교 응용소프트웨어공학과 클라우드</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="description" content="OpenStack 기반 클라우드 인프라 관리 대시보드" />
       </head>

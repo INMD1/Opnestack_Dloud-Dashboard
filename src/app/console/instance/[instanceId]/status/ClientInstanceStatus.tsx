@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { components } from "@/lib/skyline-api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertCircleIcon, CheckCircle2Icon, PopcornIcon } from "lucide-react"
+import { CheckCircle2Icon } from "lucide-react"
 import {
     Alert,
     AlertDescription,
@@ -19,7 +19,7 @@ export default function ClientInstanceStatus({
     instanceId: string;
 }) {
     const [instance, setInstance] = useState<Instance | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    const [error] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchStatus = async () => {
@@ -41,7 +41,7 @@ export default function ClientInstanceStatus({
                 } else {
                     console.log("Instance not found yet, retrying...");
                 }
-            } catch (errer) {
+            } catch (_error) {
                 clearInterval(intervalId);
             }
         };
