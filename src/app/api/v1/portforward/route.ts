@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { getSkylineClient } from "@/lib/skyline";
 import { logger } from "@/lib/logger";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
         if (!session?.keystone_token) {
@@ -12,16 +13,18 @@ export async function GET() {
         }
 
         const skylineClient = getSkylineClient(session.keystone_token);
-        const { data, error } = await skylineClient.GET("/api/v1/extension/volumes");
+        const { data, error } = await (skylineClient as any).GET("/api/v1/portforward");
 
         if (error) {
-            return new NextResponse(JSON.stringify(error), { status: 500 });
+            logger.devError("Backend error:", error);
+            return new NextResponse(JSON.stringify(error), { status: (error as any).status || 500 });
         }
 
         return new NextResponse(JSON.stringify(data), { status: 200 });
+
     } catch (err) {
-        logger.devError("List Volumes API error:", err);
-        return new NextResponse(JSON.stringify({ message: "List Volumes API failed" }), { status: 500 });
+        logger.devError("Port Forward List API error:", err);
+        return new NextResponse(JSON.stringify({ message: "Port Forward List API failed" }), { status: 500 });
     }
 }
 
@@ -34,17 +37,19 @@ export async function POST(req: NextRequest) {
 
         const body = await req.json();
         const skylineClient = getSkylineClient(session.keystone_token);
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        const { data, error } = await skylineClient.POST("/api/v1/volumes", { body });
+        const { data, error } = await (skylineClient as any).POST("/api/v1/portforward", {
+            body: body
+        });
 
         if (error) {
-            return new NextResponse(JSON.stringify(error), { status: 500 });
+            logger.devError("Backend error:", error);
+            return new NextResponse(JSON.stringify(error), { status: (error as any).status || 500 });
         }
 
         return new NextResponse(JSON.stringify(data), { status: 201 });
+
     } catch (err) {
-        logger.devError("Create Volume API error:", err);
-        return new NextResponse(JSON.stringify({ message: "Create Volume API failed" }), { status: 500 });
+        logger.devError("Port Forward Create API error:", err);
+        return new NextResponse(JSON.stringify({ message: "Port Forward Create API failed" }), { status: 500 });
     }
 }

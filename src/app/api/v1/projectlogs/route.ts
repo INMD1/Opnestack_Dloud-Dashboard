@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getSkylineClient } from "@/lib/skyline";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
     try {
@@ -21,7 +22,7 @@ export async function GET() {
 
         return new NextResponse(JSON.stringify(data), { status: 200 });
     } catch (err) {
-        console.error("Get Instances API error:", err);
+        logger.devError("Get Instances API error:", err);
         return new NextResponse(JSON.stringify({ message: "Get Instances API failed" }), { status: 500 });
     }
 }

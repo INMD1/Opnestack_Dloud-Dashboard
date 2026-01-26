@@ -2,7 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Computer, Menu, X, Cpu, Zap, Globe, CheckCircle2, ArrowRight, Terminal, Server, BarChart3, HardDrive, ShieldCheck, Network } from "lucide-react";
+import { Computer, Menu, X, Cpu, Zap, Globe, CheckCircle2, ArrowRight, Terminal, Server, BarChart3, HardDrive, ShieldCheck, Network, Bell } from "lucide-react";
+import AnnouncementList from "@/components/announcements/AnnouncementList";
 
 // 데이터 정의 (제공해주신 표 내용 반영)
 const FLAVORS = [
@@ -593,6 +594,31 @@ export default function Home() {
 
         </div>
       </section>
+
+      {/* 공지사항 섹션 */}
+      <section id="notice" className="py-24 bg-[#050505] border-t border-white/5">
+        <div className="container mx-auto px-6">
+          {/* 헤더 */}
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-900/20 border border-yellow-800/50 text-yellow-400 text-xs font-mono mb-6">
+              <Bell className="w-3 h-3" />
+              Notice
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
+              공지사항
+            </h2>
+            <p className="text-slate-400 text-lg">
+              Dcloud 서비스의 최신 소식과 업데이트를 확인하세요.
+            </p>
+          </div>
+
+          {/* 공지사항 목록 */}
+          <div className="max-w-3xl mx-auto">
+            <AnnouncementList />
+          </div>
+        </div>
+      </section>
+
       {/* 푸터 */}
       <footer className="border-t border-border/50 py-8">
         <div className="container mx-auto px-4 text-center text-muted-foreground">

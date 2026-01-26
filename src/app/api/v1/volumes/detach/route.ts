@@ -2,6 +2,7 @@ import { authOptions } from "@/lib/auth";
 import { getSkylineClient } from "@/lib/skyline";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 function jsonResponse(data: unknown, status = 200) {
     return new NextResponse(JSON.stringify(data), {
@@ -32,13 +33,13 @@ export async function POST(req: NextRequest) {
         });
 
         if (error) {
-            console.error("Volume detach error:", error);
+            logger.devError("Volume detach error:", error);
             return jsonResponse({ message: "Volume detach failed", error }, 500);
         }
 
         return jsonResponse({ message: "Volume detached successfully", data }, 200);
     } catch (err) {
-        console.error("Volume detach API error:", err);
+        logger.devError("Volume detach API error:", err);
         return jsonResponse({ message: "Volume detach API failed" }, 500);
     }
 }

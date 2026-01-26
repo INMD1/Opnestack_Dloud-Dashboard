@@ -1,7 +1,8 @@
 import { getServerSession } from "next-auth/next";
-import {  NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { getSkylineClient } from "@/lib/skyline";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
     try {
@@ -19,7 +20,7 @@ export async function GET() {
 
         return new NextResponse(JSON.stringify(data), { status: 200 });
     } catch (err) {
-        console.error("List Flavors API error:", err);
+        logger.devError("List Flavors API error:", err);
         return new NextResponse(JSON.stringify({ message: "List Flavors API failed" }), { status: 500 });
     }
 }

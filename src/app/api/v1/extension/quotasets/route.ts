@@ -2,6 +2,7 @@
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 
 export async function GET(req: NextRequest) {
     try {
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest) {
 
         return new NextResponse(JSON.stringify(data), { status: 200 });
     } catch (err) {
-        console.error("List Quotas API error:", err);
+        logger.devError("List Quotas API error:", err);
         return new NextResponse(JSON.stringify({ message: "List Quotas API failed" }), { status: 500 });
     }
 }

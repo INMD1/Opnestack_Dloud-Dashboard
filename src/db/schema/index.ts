@@ -29,3 +29,23 @@ export const pendingUsers = sqliteTable('pending_users', {
     token: text('token').notNull().unique(), // 인증 토큰과 연결
     created_at: integer('created_at', { mode: 'timestamp' }).notNull()
 });
+
+// 관리자 목록
+export const admins = sqliteTable('admins', {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    user_id: text('user_id').notNull().unique(), // OpenStack user ID
+    username: text('username').notNull(), // 관리자 이름
+    created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
+// 공지사항
+export const announcements = sqliteTable('announcements', {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    title: text('title').notNull(),
+    content: text('content').notNull(),
+    author_id: text('author_id').notNull(), // 작성자 user_id
+    author_name: text('author_name').notNull(), // 작성자 이름
+    created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
+    updated_at: integer('updated_at', { mode: 'timestamp' }),
+    is_active: integer('is_active').notNull().default(1), // 0: 삭제됨, 1: 활성
+});

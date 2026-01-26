@@ -123,7 +123,7 @@ export default function ConsolePage() {
   const [limits, setLimits] = useState<components["schemas"]["QuotaSet"] | null>(null);
   const [portlimit, setPortlimit] = useState("");
   const [projectlogs, setProjectlogs] = useState([]);
-  const isLoadingRef = useRef(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const entries = Object.entries(limits ?? {}).filter(([key]) => !["subnet", "security_group", "floatingip", "port", "router", "security_group_rule"].includes(key)) as [keyof components["schemas"]["QuotaSet"], Quota][];
 
@@ -138,11 +138,13 @@ export default function ConsolePage() {
         const resss = await fetch("/api/v1/projectlogs");
         const dataaa = await resss.json();
         setProjectlogs(dataaa.project_logs);
-        console.log(dataaa.project_logs);
+
+
         const ress = await fetch("/api/v1/port_forwardings/stats");
         const dataa = await ress.json();
         setPortlimit(dataa);
-
+        console.log(dataa);
+        
         const res = await fetch("/api/v1/limits");
         const data = await res.json();
 
@@ -150,7 +152,7 @@ export default function ConsolePage() {
         setLimits(data.quotas);
 
 
-        isLoadingRef.current = true;
+        setIsLoading(false);
       } catch (error) {
         console.error("Error fetching limits:", error);
       }
@@ -271,7 +273,7 @@ export default function ConsolePage() {
       <section>
         <h2 className="text-2xl font-bold mb-4">계정 한도 및 최근 활동</h2>
         <div className="">
-          {isLoadingRef.current ? (
+          {isLoading ? (
             <p>계정 한도 정보를 불러오는 중입니다...</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">

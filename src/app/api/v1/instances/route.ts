@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { getSkylineClient } from "@/lib/skyline";
+import { logger } from "@/lib/logger";
 
 function jsonResponse(data: unknown, status = 200) {
     return new NextResponse(JSON.stringify(data), {
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
 
         return new NextResponse(JSON.stringify({ ...data, instance_ip: instanceIp }), { status: 202 });
     } catch (err) {
-        console.error("Create Instance API error:", err);
+        logger.devError("Create Instance API error:", err);
         return new NextResponse(JSON.stringify({ message: "Create Instance API failed" }), { status: 500 });
     }
 }
@@ -68,7 +69,7 @@ export async function GET(req: NextRequest) {
 
         return new NextResponse(JSON.stringify(data), { status: 200 });
     } catch (err) {
-        console.error("Get Instances API error:", err);
+        logger.devError("Get Instances API error:", err);
         return new NextResponse(JSON.stringify({ message: "Get Instances API failed" }), { status: 500 });
     }
 }
@@ -107,7 +108,7 @@ export async function DELETE(req: NextRequest) {
 
         return jsonResponse(data, 200);
     } catch (err) {
-        console.error("Delete Instance API error:", err);
+        logger.devError("Delete Instance API error:", err);
         return jsonResponse({ message: "Delete Instance API failed" }, 500);
     }
 }

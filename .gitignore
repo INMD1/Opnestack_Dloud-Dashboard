@@ -46,3 +46,4 @@ sqlite.db-shm
 sqlite.db-wal
 /drizzle
 server.log
+*.txt
