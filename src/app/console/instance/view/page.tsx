@@ -1,5 +1,4 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
 "use client"
 
 import { useState, useEffect } from "react";
@@ -21,7 +20,6 @@ import {
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
@@ -244,7 +242,7 @@ export default function InstanceViewPage() {
                 <CardContent className="p-5">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-gradient-to-r from-primary/5 to-accent/5 hover:from-primary/10 hover:to-accent/10">
+                            <TableRow className="bg-linear-to-r from-primary/5 to-accent/5 hover:from-primary/10 hover:to-accent/10">
                                 <TableHead className="font-bold">이름</TableHead>
                                 <TableHead className="font-bold">상태</TableHead>
                                 <TableHead className="font-bold">사양 (Flavor)</TableHead>
@@ -270,18 +268,18 @@ export default function InstanceViewPage() {
                                         }}
                                         key={instance.id}
                                         className={`transition-all duration-200 ${instance.status === 'BUILD'
-                                                ? 'opacity-50 cursor-not-allowed bg-muted/50'
-                                                : 'hover:bg-accent/50 hover:border-l-4 hover:border-primary cursor-pointer'
+                                            ? 'opacity-50 cursor-not-allowed bg-muted/50'
+                                            : 'hover:bg-accent/50 hover:border-l-4 hover:border-primary cursor-pointer'
                                             }`}
                                     >
                                         <TableCell className="font-medium">{instance.name}</TableCell>
                                         <TableCell>
-                                            <Badge variant="outline" className={statusStyles[instance.status] || statusStyles.Stopped}>
+                                            <Badge variant="outline" className={statusStyles[instance.status ?? "UNKNOWN"] || statusStyles.Stopped}>
                                                 {instance.status}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>{instance.flavor}</TableCell>
-                                        <TableCell>{instance.fixed_addresses?.[0]}</TableCell>
+                                        <TableCell>{String(instance.fixed_addresses?.[0] ?? "")}</TableCell>
                                         <TableCell>{new Date(instance.created_at as string).toLocaleDateString()}</TableCell>
                                         <TableCell className="text-right">
                                             <DropdownMenu>

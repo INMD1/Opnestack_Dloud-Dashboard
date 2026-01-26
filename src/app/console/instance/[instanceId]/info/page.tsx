@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -62,13 +62,44 @@ export default function InstanceInfoPage() {
     const [protocol, setProtocol] = useState("tcp");
     const [isAdding, setIsAdding] = useState(false);
 
-    useEffect(() => {
-        fetchInstanceData();
-        fetchPortForwardings();
-        fetchNovnc();
+    const fetchInstanceData = useCallback(async () => {
+        try {
+            setLoading(true);
+            const res = await fetch(`/api/v1/instances?instance_id=${instanceId}`);
+            if (!res.ok) {
+                throw new Error("Failed to fetch instance");
+            }
+            const data = await res.json();
+            setInstance(data);
+            console.log(data);
+            // Internal IP 추출
+            if (data.addresses["private-net"][0].addr && data.addresses["private-net"][0].addr.length > 0) {
+                setInternalIp(data.addresses["private-net"][0].addr);
+            } else if (data.addresses) {
+                // addresses에서 첫 번째 fixed IP 추출
+                const networks = Object.values(data.addresses);
+                if (networks.length > 0) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const fixedIp = (networks[0] as any[]).find((addr: any) => addr["OS-EXT-IPS:type"] === "fixed");
+                    if (fixedIp) {
+                        setInternalIp(fixedIp.addr);
+                    }
+                }
+            }
+
+        } catch (error) {
+            console.error(error);
+            toaster.create({
+                title: "오류",
+                description: "인스턴스 정보를 불러오는 데 실패했습니다.",
+                type: "error",
+            });
+        } finally {
+            setLoading(false);
+        }
     }, [instanceId]);
 
-    async function fetchPortForwardings() {
+    const fetchPortForwardings = useCallback(async () => {
         try {
             const res = await fetch(`/api/v1/portforward/vm/${instanceId}`);
             if (res.ok) {
@@ -78,7 +109,26 @@ export default function InstanceInfoPage() {
         } catch (error) {
             console.error("Failed to fetch port forwardings:", error);
         }
-    }
+    }, [instanceId]);
+
+    const fetchNovnc = useCallback(async () => {
+        try {
+            const res = await fetch(`/api/v1/novnc?instance_id=${instanceId}`);
+            if (!res.ok) {
+                throw new Error("Failed to fetch novnc");
+            }
+            const data = await res.json();
+            setNovnc(data["remote_console"]?.url ? (() => { const u = new URL(data["remote_console"].url); u.hostname = process.env.NEXT_PUBLIC_NOVNC ?? ""; u.protocol = "http:"; return u.toString(); })() : "");
+        } catch (error) {
+            console.error(error);
+        }
+    }, [instanceId]);
+
+    useEffect(() => {
+        fetchInstanceData();
+        fetchPortForwardings();
+        fetchNovnc();
+    }, [fetchInstanceData, fetchPortForwardings, fetchNovnc]);
 
     // 인스턴스 시작
     const startInstance = async (instanceId: string) => {
@@ -150,56 +200,7 @@ export default function InstanceInfoPage() {
         }
     };
 
-    async function fetchInstanceData() {
-        try {
-            setLoading(true);
-            const res = await fetch(`/api/v1/instances?instance_id=${instanceId}`);
-            if (!res.ok) {
-                throw new Error("Failed to fetch instance");
-            }
-            const data = await res.json();
-            setInstance(data);
-            // setPortForwardings(data.port_forwardings || []); // Removed: fetching separately
-            console.log(data);
-            // Internal IP 추출
-            if (data.addresses["private-net"][0].addr && data.addresses["private-net"][0].addr.length > 0) {
-                setInternalIp(data.addresses["private-net"][0].addr);
-            } else if (data.addresses) {
-                // addresses에서 첫 번째 fixed IP 추출
-                const networks = Object.values(data.addresses);
-                if (networks.length > 0) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const fixedIp = (networks[0] as any[]).find((addr: any) => addr["OS-EXT-IPS:type"] === "fixed");
-                    if (fixedIp) {
-                        setInternalIp(fixedIp.addr);
-                    }
-                }
-            }
 
-        } catch (error) {
-            console.error(error);
-            toaster.create({
-                title: "오류",
-                description: "인스턴스 정보를 불러오는 데 실패했습니다.",
-                type: "error",
-            });
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    async function fetchNovnc() {
-        try {
-            const res = await fetch(`/api/v1/novnc?instance_id=${instanceId}`);
-            if (!res.ok) {
-                throw new Error("Failed to fetch novnc");
-            }
-            const data = await res.json();
-            setNovnc(data["remote_console"]?.url ? (() => { const u = new URL(data["remote_console"].url); u.hostname = process.env.NEXT_PUBLIC_NOVNC ?? ""; u.protocol = "http:"; return u.toString(); })() : "");
-        } catch (error) {
-            console.error(error);
-        }
-    }
 
     async function handleAddPortForwarding() {
         if (!internalPort) {

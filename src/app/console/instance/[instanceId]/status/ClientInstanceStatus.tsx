@@ -42,6 +42,7 @@ export default function ClientInstanceStatus({
                     console.log("Instance not found yet, retrying...");
                 }
             } catch (_error) {
+                console.error("Fetch status error:", _error);
                 clearInterval(intervalId);
             }
         };
