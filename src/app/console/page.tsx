@@ -140,15 +140,17 @@ export default function ConsolePage() {
         setProjectlogs(dataaa.project_logs);
 
 
-        const ress = await fetch("/api/v1/port_forwardings/stats");
+        const ress = await fetch("/api/v1/portforward");
         const dataa = await ress.json();
-        setPortlimit(dataa);
-        console.log(dataa);
-        
+        // dataa is an array of port forwarding rules from the external server
+        const portForwardCount = Array.isArray(dataa) ? dataa.length : 0;
+
         const res = await fetch("/api/v1/limits");
         const data = await res.json();
 
-        data.quotas.port_forwardings.in_use = dataa.total_count;
+        // Create port limit object with the correct count
+        setPortlimit({ total_count: portForwardCount, limit: data.quotas.port_forwardings.limit });
+        data.quotas.port_forwardings.in_use = portForwardCount;
         setLimits(data.quotas);
 
 
