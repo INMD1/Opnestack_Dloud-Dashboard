@@ -123,7 +123,7 @@ export default function ConsolePage() {
   const [limits, setLimits] = useState<components["schemas"]["QuotaSet"] | null>(null);
   const [portlimit, setPortlimit] = useState("");
   const [projectlogs, setProjectlogs] = useState([]);
-  const isLoadingRef = useRef(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const entries = Object.entries(limits ?? {}).filter(([key]) => !["subnet", "security_group", "floatingip", "port", "router", "security_group_rule"].includes(key)) as [keyof components["schemas"]["QuotaSet"], Quota][];
 
@@ -133,26 +133,56 @@ export default function ConsolePage() {
     setMessage(welcomeMessages[randomIndex]);
 
     async function fetchData() {
+      setIsLoading(true);
 
       try {
-        const resss = await fetch("/api/v1/projectlogs");
-        const dataaa = await resss.json();
-        setProjectlogs(dataaa.project_logs);
-        console.log(dataaa.project_logs);
-        const ress = await fetch("/api/v1/port_forwardings/stats");
-        const dataa = await ress.json();
-        setPortlimit(dataa);
+        // Fetch project logs with error handling
+        try {
+          const resss = await fetch("/api/v1/projectlogs");
+          const dataaa = await resss.json();
+          // Safely access project_logs array
+          setProjectlogs(Array.isArray(dataaa?.project_logs) ? dataaa.project_logs : []);
+        } catch (error) {
+          console.error("Error fetching project logs:", error);
+          setProjectlogs([]);
+        }
 
-        const res = await fetch("/api/v1/limits");
-        const data = await res.json();
+        // Fetch port forward data with error handling
+        let portForwardCount = 0;
+        try {
+          const ress = await fetch("/api/v1/portforward");
+          const dataa = await ress.json();
+          // dataa is an array of port forwarding rules from the external server
+          portForwardCount = Array.isArray(dataa) ? dataa.length : 0;
+        } catch (error) {
+          console.error("Error fetching port forwards:", error);
+          portForwardCount = 0;
+        }
 
-        data.quotas.port_forwardings.in_use = dataa.total_count;
-        setLimits(data.quotas);
+        // Fetch limits with error handling
+        try {
+          const res = await fetch("/api/v1/limits");
+          const data = await res.json();
 
+          // Safely access quotas and port_forwardings
+          if (data?.quotas) {
+            // Create port limit object with the correct count
+            if (data.quotas.port_forwardings) {
+              setPortlimit({ total_count: portForwardCount, limit: data.quotas.port_forwardings.limit });
+              data.quotas.port_forwardings.in_use = portForwardCount;
+            }
+            setLimits(data.quotas);
+          } else {
+            console.error("Invalid limits data structure");
+          }
+        } catch (error) {
+          console.error("Error fetching limits:", error);
+        }
 
-        isLoadingRef.current = true;
+        setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching limits:", error);
+        console.error("Error in fetchData:", error);
+        setIsLoading(false);
       }
     }
     fetchData();
@@ -252,17 +282,21 @@ export default function ConsolePage() {
               <div className="space-y-4 relative overflow-auto h-[20vh]">
                 {/* 타임라인 세로선 */}
                 <div className="absolute left-[18px] top-0 bottom-0 w-[2px] bg-gradient-to-b from-primary via-accent to-transparent" />
-                {projectlogs.map((activity, index) => (
-                  <div key={index} className="flex items-start gap-4 relative transition-all duration-300 hover:translate-x-2">
-                    <div className="gradient-primary rounded-full p-2 z-10 ring-4 ring-background">
-                      <FaRegClock className="h-4 w-4 text-white" />
+                {Array.isArray(projectlogs) && projectlogs.length > 0 ? (
+                  projectlogs.map((activity, index) => (
+                    <div key={index} className="flex items-start gap-4 relative transition-all duration-300 hover:translate-x-2">
+                      <div className="gradient-primary rounded-full p-2 z-10 ring-4 ring-background">
+                        <FaRegClock className="h-4 w-4 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{activity.message}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{activity.created_at}</p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{activity.message}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{activity.created_at}</p>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground pl-12">최근 활동이 없습니다.</p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -271,7 +305,7 @@ export default function ConsolePage() {
       <section>
         <h2 className="text-2xl font-bold mb-4">계정 한도 및 최근 활동</h2>
         <div className="">
-          {isLoadingRef.current ? (
+          {isLoading ? (
             <p>계정 한도 정보를 불러오는 중입니다...</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">

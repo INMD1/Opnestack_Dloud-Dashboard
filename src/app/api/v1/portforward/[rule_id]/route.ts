@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { getSkylineClient } from "@/lib/skyline";
+import { logger } from "@/lib/logger";
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ rule_id: string }> }) {
     try {
@@ -17,14 +18,14 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ r
         const { error } = await (skylineClient as any).DELETE(`/api/v1/portforward/${rule_id}`);
 
         if (error) {
-            console.error("Backend error:", error);
+            logger.devError("Backend error:", error);
             return new NextResponse(JSON.stringify(error), { status: 500 });
         }
 
         return new NextResponse(null, { status: 204 });
 
     } catch (err) {
-        console.error("Port Forward Delete API error:", err);
+        logger.devError("Port Forward Delete API error:", err);
         return new NextResponse(JSON.stringify({ message: "Port Forward Delete API failed" }), { status: 500 });
     }
 }

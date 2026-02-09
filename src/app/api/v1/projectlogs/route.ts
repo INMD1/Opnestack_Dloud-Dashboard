@@ -4,24 +4,28 @@ import { authOptions } from "@/lib/auth";
 import { getSkylineClient } from "@/lib/skyline";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
     try {
         const session = await getServerSession(authOptions);
         if (!session?.keystone_token) {
-            return new NextResponse(JSON.stringify({ message: "Unauthorized" }), { status: 401 });
+            return new NextResponse(JSON.stringify({ message: "Unauthorized", project_logs: [] }), { status: 401 });
         }
 
         const skylineClient = getSkylineClient(session.keystone_token);
         const { data, error } = await skylineClient.GET(`/api/v1/projectlogs`, {});
 
         if (error) {
-            return new NextResponse(JSON.stringify(error), { status: 500 });
+            logger.devError("Backend projectlogs error:", error);
+            // Return empty array instead of error to prevent frontend crashes
+            return new NextResponse(JSON.stringify({ project_logs: [] }), { status: 200 });
         }
 
         return new NextResponse(JSON.stringify(data), { status: 200 });
     } catch (err) {
-        console.error("Get Instances API error:", err);
-        return new NextResponse(JSON.stringify({ message: "Get Instances API failed" }), { status: 500 });
+        logger.devError("Get Project Logs API error:", err);
+        // Return empty array instead of error to prevent frontend crashes
+        return new NextResponse(JSON.stringify({ project_logs: [] }), { status: 200 });
     }
 }

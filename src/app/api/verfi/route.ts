@@ -177,6 +177,7 @@ export async function POST(req: NextRequest) {
                 { status: 200 }
             );
         } catch (_error) {
+            console.error("Email send failed:", _error);
             // 에러 나면 방금 넣은 토큰과 임시 사용자 정보 삭제
             await db
                 .delete(verifiactionToken)

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
@@ -86,7 +87,7 @@ export default function RegisterPage() {
     return (
         <div className="flex h-screen overscroll-contain">
             {/* 회원가입 폼 */}
-            <div className="w-2/5 flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
+            <div className="w-[53vw] flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
                 <div className="px-24 w-full max-h-screen overflow-y-auto py-8">
                     <div className="mb-6">
                         <h1 className="text-4xl font-bold">
@@ -203,6 +204,7 @@ export default function RegisterPage() {
                                 >
                                     {isLoading ? "처리 중..." : "회원가입"}
                                 </Button>
+                                <p className="text-xs text-muted-foreground">*회원가입이 되면 자동으로 <a href="/privacy-policy" className="text-primary">개인정보처리방침</a>과 <a href="/TermsofUse" className="text-primary">서비스 이용약관</a>에 동의한걸로 처리됩니다.</p>
                             </form>
                         </Form>
 
@@ -219,19 +221,20 @@ export default function RegisterPage() {
             </div>
 
             {/* 오른쪽 배경 이미지 */}
-            <div className="w-3/5 relative overflow-hidden">
+            <div className="w-full relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20" />
-                <img
+                <Image
                     className="h-full w-full object-cover object-center mix-blend-overlay"
                     src="/image/auth/loginbackgorund.jpg"
                     alt="배경"
+                    fill
+                    priority
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center text-white p-12 glass rounded-2xl max-w-md">
+                    <div className="text-left text-white p-12 glass rounded-2xl max-w-md">
                         <h2 className="text-3xl font-bold mb-4">클라우드 인프라 관리</h2>
                         <p className="text-lg opacity-90">
                             OpenStack 기반의 강력한 클라우드 플랫폼으로
-                            <br />
                             인스턴스, 네트워크, 스토리지를 쉽게 관리하세요
                         </p>
                     </div>

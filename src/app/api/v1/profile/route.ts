@@ -2,6 +2,7 @@
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
     try {
@@ -20,15 +21,22 @@ export async function GET() {
             },
         });
 
-        const data = await response.json();
-
         if (!response.ok) {
-            return new NextResponse(JSON.stringify(data), { status: response.status });
+            logger.devError(`Profile API returned status ${response.status}`);
+            // Return empty profile to prevent frontend crashes
+            return new NextResponse(JSON.stringify({}), { status: 200 });
         }
 
-        return new NextResponse(JSON.stringify(data), { status: 200 });
+        try {
+            const data = await response.json();
+            return new NextResponse(JSON.stringify(data), { status: 200 });
+        } catch (parseError) {
+            logger.devError("Failed to parse profile response:", parseError);
+            return new NextResponse(JSON.stringify({}), { status: 200 });
+        }
     } catch (err) {
-        console.error("Profile API error:", err);
-        return new NextResponse(JSON.stringify({ message: "Profile API failed" }), { status: 500 });
+        logger.devError("Profile API error:", err);
+        // Return empty profile to prevent frontend crashes
+        return new NextResponse(JSON.stringify({}), { status: 200 });
     }
 }

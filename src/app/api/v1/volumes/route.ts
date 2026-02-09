@@ -2,6 +2,7 @@ import { authOptions } from "@/lib/auth";
 import { getSkylineClient } from "@/lib/skyline";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 function jsonResponse(data: unknown, status = 200) {
     return new NextResponse(JSON.stringify(data), {
@@ -34,7 +35,7 @@ export async function DELETE(req: NextRequest) {
 
         return jsonResponse({ message: "Volume deleted successfully" }, 200);
     } catch (err) {
-        console.error("Volume deletion API error:", err);
+        logger.devError("Volume deletion API error:", err);
         return jsonResponse({ message: "Volume deletion API failed" }, 500);
     }
 }

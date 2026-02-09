@@ -1,0 +1,128 @@
+/* 이용약관 마크다운 스타일 - 심플 다크 테마 */
+.prose {
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.9;
+    color: #d1d5db;
+    max-width: 800px;
+    font-size: 0.95rem;
+}
+
+/* 장 제목 - h1 */
+.prose h1 {
+    font-size: 1.5em;
+    font-weight: 700;
+    margin-top: 3rem;
+    margin-bottom: 1.5rem;
+    color: #ffffff;
+    border-bottom: 1px solid #374151;
+    padding-bottom: 0.75rem;
+}
+
+.prose h1:first-child {
+    margin-top: 0;
+}
+
+/* 조 제목 - h3 */
+.prose h3 {
+    font-size: 1.1em;
+    font-weight: 600;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: #93c5fd;
+}
+
+/* 소제목 - h4 */
+.prose h4 {
+    font-size: 1em;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: #a5b4fc;
+}
+
+/* 본문 */
+.prose p {
+    margin-bottom: 1rem;
+    color: #d1d5db;
+}
+
+/* 강조 텍스트 */
+.prose strong {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* 구분선 */
+.prose hr {
+    border: none;
+    border-top: 1px solid #374151;
+    margin: 2.5rem 0;
+}
+
+/* 순서 있는 리스트 */
+.prose ol {
+    list-style-type: decimal;
+    padding-left: 1.5rem;
+    margin: 1rem 0;
+}
+
+.prose ol>li {
+    margin-bottom: 0.75rem;
+    line-height: 1.8;
+}
+
+.prose ol>li::marker {
+    color: #9ca3af;
+}
+
+/* 순서 없는 리스트 */
+.prose ul {
+    list-style-type: disc;
+    padding-left: 1.5rem;
+    margin: 0.75rem 0;
+}
+
+.prose ul>li {
+    margin-bottom: 0.5rem;
+    line-height: 1.8;
+}
+
+.prose ul>li::marker {
+    color: #6b7280;
+}
+
+/* 링크 */
+.prose a {
+    color: #60a5fa;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.prose a:hover {
+    color: #93c5fd;
+}
+
+/* 테이블 */
+.prose table {
+    width: 100%;
+    font-size: 0.9rem;
+    margin: 1.5rem 0;
+    border-collapse: collapse;
+}
+
+.prose th,
+.prose td {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border: 1px solid #374151;
+}
+
+.prose th {
+    background-color: #1f2937;
+    color: #f3f4f6;
+    font-weight: 600;
+}
+
+.prose tr:nth-child(even) {
+    background-color: rgba(31, 41, 55, 0.5);
+}
