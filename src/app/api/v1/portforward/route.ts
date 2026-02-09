@@ -16,15 +16,17 @@ export async function GET(req: NextRequest) {
         const { data, error } = await (skylineClient as any).GET("/api/v1/portforward");
 
         if (error) {
-            logger.devError("Backend error:", error);
-            return new NextResponse(JSON.stringify(error), { status: (error as any).status || 500 });
+            logger.devError("Backend portforward error:", error);
+            // Return empty array to prevent frontend crashes
+            return new NextResponse(JSON.stringify([]), { status: 200 });
         }
 
         return new NextResponse(JSON.stringify(data), { status: 200 });
 
     } catch (err) {
         logger.devError("Port Forward List API error:", err);
-        return new NextResponse(JSON.stringify({ message: "Port Forward List API failed" }), { status: 500 });
+        // Return empty array to prevent frontend crashes
+        return new NextResponse(JSON.stringify([]), { status: 200 });
     }
 }
 

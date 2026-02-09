@@ -77,7 +77,7 @@ export default function ClientInstanceStatus({
                             <CheckCircle2Icon />
                             <AlertTitle>확인해 주세요!</AlertTitle>
                             <AlertDescription>
-                                현재 보고있는 페이지는 디스크가 생성되고 있는 중입니다. 이 디스크 생성은 1~5분 정도 소요됩니다.
+                                현재 보고있는 페이지는 디스크가 생성되고 있는 중입니다. 이 디스크 생성은 4~30분 정도 소요됩니다.
                             </AlertDescription>
                         </Alert>
                         <div className="mt-3">인스턴스 디스크 생성중...</div>
