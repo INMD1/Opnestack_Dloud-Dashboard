@@ -114,10 +114,12 @@ export default function InstanceCreatePage() {
             });
 
             if (res.status === 202) { // HTTP 202 Accepted
-                const responseData = await res.json();
-                const instanceId = responseData.id;
-                // instanceId를 가지고 상태를 보여줄 페이지로 이동
-                window.location.href = `/console/instance/${instanceId}/status`;
+                // 인스턴스 이름으로 상태 페이지 이동 (백그라운드 생성이므로 ID가 아직 없음)
+                const encodedName = encodeURIComponent(instanceName);
+                window.location.href = `/console/instance/${encodedName}/status`;
+            } else if (res.status === 409) { // 중복 이름
+                const error = await res.json();
+                alert(error.detail || '이미 동일한 이름의 인스턴스가 존재합니다.');
             } else {
                 const error = await res.json();
                 alert(`인스턴스 생성 요청 실패: ${error.detail || '알 수 없는 오류'}`);
