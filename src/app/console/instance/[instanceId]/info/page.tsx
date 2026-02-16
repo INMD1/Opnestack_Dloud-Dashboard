@@ -369,7 +369,18 @@ export default function InstanceInfoPage() {
                     )}
                 </div>
             </header>
-
+            <Alert className="mb-5 flex justify-between border-sky-200 bg-sky-50 text-black dark:border-blue-900 dark:bg-sky-950 dark:text-sky-50">
+                <div>
+                    <div className="flex items-center gap-2">
+                        <Terminal />
+                        <AlertTitle>필독!</AlertTitle>
+                    </div>
+                    <AlertDescription>
+                        SSH 접속하는 방법
+                    </AlertDescription>
+                </div>
+                <Button onClick={() => window.open("https://docs.dcloud.p-e.kr/docs/howtoaccess")}>도움말 이동</Button>
+            </Alert>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 {/* 포트포워딩 관리 */}
                 <Card>
