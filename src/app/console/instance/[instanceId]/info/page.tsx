@@ -45,6 +45,7 @@ interface Instance {
     port_forwardings?: PortForwarding[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     addresses?: any;
+    os_name?: string;
 }
 
 export default function InstanceInfoPage() {
@@ -495,6 +496,7 @@ export default function InstanceInfoPage() {
                                 <p className="text-lg"><strong>내부 IP: </strong>{instance.addresses["private-net"][0].addr}</p>
                                 <p className="text-lg"><strong>상태: </strong>{instance.status}</p>
                                 <p className="text-lg"><strong>생성일: </strong>{instance.created}</p>
+                                <p className="text-lg"><strong>OS: </strong>{instance.os_name || "Unknown"}</p>
                             </div>
                         ) : (
                             <p className="text-sm text-muted-foreground">인스턴스 정보를 불러올 수 없습니다.</p>

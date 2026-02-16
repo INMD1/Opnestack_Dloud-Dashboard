@@ -33,7 +33,7 @@ import { Label } from "@/components/ui/label";
 interface Keypair {
   name: string;
   fingerprint: string;
-  created_at: string;
+  created_at?: string;
 }
 
 export default function KeypairPage() {
@@ -200,7 +200,9 @@ export default function KeypairPage() {
                   <TableRow key={keypair.name}>
                     <TableCell className="font-medium">{keypair.name}</TableCell>
                     <TableCell>{keypair.fingerprint}</TableCell>
-                    <TableCell>{new Date(keypair.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      {keypair.created_at ? new Date(keypair.created_at).toLocaleDateString() : "-"}
+                    </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
