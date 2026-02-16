@@ -70,7 +70,6 @@ export default function InstanceViewPage() {
 
     useEffect(() => {
         async function fetchInstances() {
-            setLoading(true);
             try {
                 const res = await fetch("/api/v1/extension/servers");
                 if (!res.ok) {
@@ -83,9 +82,13 @@ export default function InstanceViewPage() {
             } catch (error) {
                 console.error(error);
             }
-            setLoading(false);
         }
         fetchInstances();
+        setLoading(false);
+        //5초 마다 재호출
+        setInterval(() => {
+            fetchInstances();
+        }, 5000);
     }, []);
 
     // 삭제 확인 다이얼로그 열기

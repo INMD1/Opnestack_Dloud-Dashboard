@@ -88,6 +88,8 @@ export default function InstanceCreatePage() {
             protocol: "tcp"
         })).filter(p => !isNaN(p.external_port) && !isNaN(p.internal_port));
 
+        const osName = images.find((image) => image.id === selectedImage)?.name;
+
         const instanceData = {
             name: instanceName,
             image_id: selectedImage,
@@ -95,7 +97,8 @@ export default function InstanceCreatePage() {
             key_name: selectedKeypair,
             network_id: selectedNetwork,
             additional_ports: portForwardings,
-            volume_size: cinervolume
+            volume_size: cinervolume,
+            os_name: osName ? osName : "Undefined"
         };
 
         console.log(instanceData);
@@ -211,7 +214,7 @@ export default function InstanceCreatePage() {
                                 <select
                                     id="os-select"
                                     value={selectedImage}
-                                    onChange={(e) => setSelectedImage(e.target.value)}
+                                    onChange={(e) => { setSelectedImage(e.target.value)}}
                                     className="w-full p-2 border rounded-md bg-background mt-1"
                                     disabled={loading || images.length === 0}
                                 >
@@ -228,7 +231,7 @@ export default function InstanceCreatePage() {
                                 <select
                                     id="network-select"
                                     value={selectedNetwork}
-                                    onChange={(e) => setSelectedNetwork(e.target.value)}
+                                    onChange={(e) =>  setSelectedNetwork(e.target.value)}
                                     className="w-full p-2 border rounded-md bg-background mt-1"
                                     disabled={loading || networks.length === 0}
                                 >
