@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -34,6 +34,21 @@ export default function RegisterPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    const [ssoEnabled, setSsoEnabled] = useState(false);
+    const [ssoUrl, setSsoUrl] = useState("");
+
+    useEffect(() => {
+        fetch(`/api/v1/sso`)
+            .then((r) => r.json())
+            .then((data) => {
+                if (data.enable_sso && data.protocols?.length > 0) {
+                    setSsoEnabled(true);
+                    setSsoUrl(data.protocols[0].url);
+                }
+            })
+            .catch((e) => console.error("SSO check error:", e));
+    }, []);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -202,9 +217,24 @@ export default function RegisterPage() {
                                     className="w-full gradient-primary text-white hover-lift"
                                     disabled={isLoading}
                                 >
-                                    {isLoading ? "처리 중..." : "회원가입"}
+                                    {isLoading ? "처리 중..." : "일반 회원가입"}
                                 </Button>
-                                <p className="text-xs text-muted-foreground">*회원가입이 되면 자동으로 <a href="/privacy-policy" className="text-primary">개인정보처리방침</a>과 <a href="/TermsofUse" className="text-primary">서비스 이용약관</a>에 동의한걸로 처리됩니다.</p>
+
+                                {ssoEnabled && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="w-full"
+                                        onClick={() => {
+                                            localStorage.setItem("sso_intent", "register");
+                                            window.location.href = ssoUrl;
+                                        }}
+                                    >
+                                        Authentik으로 회원가입 (SSO)
+                                    </Button>
+                                )}
+
+                                <p className="text-xs text-muted-foreground mt-2">*회원가입이 되면 자동으로 <a href="/privacy-policy" className="text-primary">개인정보처리방침</a>과 <a href="/TermsofUse" className="text-primary">서비스 이용약관</a>에 동의한걸로 처리됩니다.</p>
                             </form>
                         </Form>
 

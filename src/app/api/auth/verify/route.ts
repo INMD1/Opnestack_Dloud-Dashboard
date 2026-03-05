@@ -127,6 +127,42 @@ export async function POST(req: NextRequest) {
                 created_at: new Date(),
             });
 
+            // Authentik 유저 자동 생성 (실패해도 회원가입 성공 처리)
+            try {
+                const authentikUrl = process.env.AUTHENTIK_URL;
+                const authentikToken = process.env.AUTHENTIK_TOKEN;
+
+                if (authentikUrl && authentikToken) {
+                    const createRes = await fetch(`${authentikUrl}/api/v3/core/users/`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${authentikToken}`,
+                        },
+                        body: JSON.stringify({
+                            username: userInfo.username,
+                            name: userInfo.name,
+                            email: userInfo.email,
+                            is_active: true,
+                        }),
+                    });
+
+                    if (createRes.ok) {
+                        const authentikUser = await createRes.json();
+                        await fetch(`${authentikUrl}/api/v3/core/users/${authentikUser.pk}/set_password/`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                Authorization: `Bearer ${authentikToken}`,
+                            },
+                            body: JSON.stringify({ password: userInfo.password }),
+                        });
+                    }
+                }
+            } catch (authentikError) {
+                console.error("Authentik user creation failed (non-critical):", authentikError);
+            }
+
             // 사용된 토큰과 임시 사용자 정보 삭제
             await db
                 .delete(verifiactionToken)

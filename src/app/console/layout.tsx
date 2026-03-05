@@ -6,10 +6,20 @@ import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import ProfileChecker from "../exten/ProfileChecker";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 
 export default function Layout({ children }: { children: React.ReactNode }) {
     const { data: session, status } = useSession();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (status === "unauthenticated") {
+            router.push("/auth/login");
+        }
+    }, [status, router]);
+
     async function handlelogut() {
         try {
             await fetch("/api/auth/logout", { method: "POST" });

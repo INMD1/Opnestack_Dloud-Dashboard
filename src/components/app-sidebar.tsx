@@ -14,7 +14,8 @@ import {
   IconInnerShadowTop,
   IconListDetails,
   IconFileDots,
-  IconKey
+  IconKey,
+  IconLock
 } from "@tabler/icons-react"
 import { NavMain } from "./nav-main"
 import { NavDocuments } from "./nav-documents"
@@ -42,6 +43,11 @@ const data = {
       title: "키페어",
       url: "/console/keypair",
       icon: IconKey,
+    },
+    {
+      title: "비밀번호 변경",
+      url: "/console/settings/password",
+      icon: IconLock,
     },
   ],
   documents: [

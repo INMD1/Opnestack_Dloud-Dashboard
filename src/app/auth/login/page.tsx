@@ -16,6 +16,7 @@ import {
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 
 const formSchema = z.object({
   username: z.string().min(1, { message: "Username is required." }),
@@ -30,6 +31,21 @@ export default function LoginPage() {
       password: "",
     },
   });
+
+  const [ssoEnabled, setSsoEnabled] = useState(false);
+  const [ssoUrl, setSsoUrl] = useState("");
+
+  useEffect(() => {
+    fetch(`/api/v1/sso`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.enable_sso && data.protocols?.length > 0) {
+          setSsoEnabled(true);
+          setSsoUrl(data.protocols[0].url);
+        }
+      })
+      .catch((e) => console.error("SSO check error:", e));
+  }, []);
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     const res = await signIn("credentials", {
@@ -92,6 +108,17 @@ export default function LoginPage() {
                 <Button type="submit" className="w-full gradient-primary text-white hover-lift">
                   로그인
                 </Button>
+
+                {ssoEnabled && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => { window.location.href = ssoUrl; }}
+                  >
+                    학교 계정으로 로그인
+                  </Button>
+                )}
               </form>
             </Form>
 
