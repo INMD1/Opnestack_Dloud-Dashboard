@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -35,21 +34,6 @@ export default function RegisterPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    const [ssoEnabled, setSsoEnabled] = useState(false);
-    const [ssoUrl, setSsoUrl] = useState("");
-
-    useEffect(() => {
-        fetch(`/api/v1/sso`)
-            .then((r) => r.json())
-            .then((data) => {
-                if (data.enable_sso && data.protocols?.length > 0) {
-                    setSsoEnabled(true);
-                    setSsoUrl(data.protocols[0].url);
-                }
-            })
-            .catch((e) => console.error("SSO check error:", e));
-    }, []);
 
     const [ssoEnabled, setSsoEnabled] = useState(false);
     const [ssoUrl, setSsoUrl] = useState("");
