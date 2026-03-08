@@ -83,6 +83,14 @@ export default function KeypairPage() {
       if (data) {
         setPrivateKey(data.private_key);
         setCreateDialogOpen(false);
+        // 자동 다운로드
+        const element = document.createElement("a");
+        const file = new Blob([data.private_key], { type: 'text/plain' });
+        element.href = URL.createObjectURL(file);
+        element.download = `${newKeypairName}.pem`;
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
         setPrivateKeyDialogOpen(true);
         fetchKeypairs(); // Refresh the list
       }

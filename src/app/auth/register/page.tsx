@@ -102,8 +102,8 @@ export default function RegisterPage() {
     return (
         <div className="flex h-screen overscroll-contain">
             {/* 회원가입 폼 */}
-            <div className="w-[53vw] flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
-                <div className="px-24 w-full max-h-screen overflow-y-auto py-8">
+            <div className="w-full md:w-[53vw] flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
+                <div className="px-6 md:px-24 w-full max-h-screen overflow-y-auto py-8">
                     <div className="mb-6">
                         <h1 className="text-4xl font-bold">
                             <span className="gradient-text">회원가입</span>
@@ -217,7 +217,7 @@ export default function RegisterPage() {
                                     className="w-full gradient-primary text-white hover-lift"
                                     disabled={isLoading}
                                 >
-                                    {isLoading ? "처리 중..." : "일반 회원가입"}
+                                    {isLoading ? "처리 중..." : "DCLOUD 통합 SSO로 회원가입"}
                                 </Button>
 
                                 {ssoEnabled && (
@@ -251,7 +251,7 @@ export default function RegisterPage() {
             </div>
 
             {/* 오른쪽 배경 이미지 */}
-            <div className="w-full relative overflow-hidden">
+            <div className="hidden md:block w-full relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20" />
                 <Image
                     className="h-full w-full object-cover object-center mix-blend-overlay"

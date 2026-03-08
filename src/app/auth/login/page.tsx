@@ -61,8 +61,8 @@ export default function LoginPage() {
   return (
     <div className="flex h-screen overscroll-contain">
       {/* 로그인 폼 */}
-      <div className="w-[50vw] flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
-        <div className="px-[4vw] w-full">
+      <div className="w-full md:w-[50vw] flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
+        <div className="px-6 md:px-[4vw] w-full">
           <div className="mb-8">
             <h1 className="text-4xl font-bold">
               <span className="gradient-text">환영합니다!</span>
@@ -134,7 +134,7 @@ export default function LoginPage() {
       </div>
 
       {/* 오른쪽 배경 이미지 */}
-      <div className="w-full relative overflow-hidden">
+      <div className="hidden md:block w-full relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20" />
         <Image
           className="h-full w-full object-cover object-center mix-blend-overlay"

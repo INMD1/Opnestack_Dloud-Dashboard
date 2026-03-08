@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, Plus, Terminal } from "lucide-react";
+import { Trash2, Plus, Terminal, Copy, Check } from "lucide-react";
 import { toaster } from "@/components/ui/toaster";
 import {
     Accordion,
@@ -62,6 +62,14 @@ export default function InstanceInfoPage() {
     const [externalPort, setExternalPort] = useState("");
     const [protocol, setProtocol] = useState("tcp");
     const [isAdding, setIsAdding] = useState(false);
+    const [copiedIp, setCopiedIp] = useState<string | null>(null);
+
+    const handleCopyIp = (ip: string) => {
+        navigator.clipboard.writeText(ip).then(() => {
+            setCopiedIp(ip);
+            setTimeout(() => setCopiedIp(null), 2000);
+        });
+    };
 
     const fetchInstanceData = useCallback(async () => {
         try {
@@ -408,7 +416,21 @@ export default function InstanceInfoPage() {
                                             {portForwardings.map((pf) => (
                                                 <TableRow key={pf.id}>
                                                     <TableCell className="font-mono text-sm">
-                                                        {pf.proxy_external_ip}
+                                                        <div className="flex items-center gap-1">
+                                                            <span>{pf.proxy_external_ip}</span>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-6 w-6 p-0"
+                                                                onClick={() => handleCopyIp(pf.proxy_external_ip)}
+                                                                title="IP 복사"
+                                                            >
+                                                                {copiedIp === pf.proxy_external_ip
+                                                                    ? <Check className="h-3 w-3 text-green-500" />
+                                                                    : <Copy className="h-3 w-3 text-muted-foreground" />
+                                                                }
+                                                            </Button>
+                                                        </div>
                                                     </TableCell>
                                                     <TableCell>{pf.proxy_external_port}</TableCell>
                                                     <TableCell>{pf.user_vm_internal_port}</TableCell>
