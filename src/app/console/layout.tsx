@@ -55,18 +55,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         return () => clearInterval(interval);
     }, []);
 
-    async function handlelogut() {
+    async function handleLogout() {
         try {
             await fetch("/api/auth/logout", { method: "POST" });
         } catch (err) {
             console.error("Logout API failed:", err);
         } finally {
-            signOut({ callbackUrl: "/auth/login" });
+            signOut({ callbackUrl: "/" });
         }
     }
-    //어디다 설치할지 고민중
-    {/* <SidebarTrigger /> */ }
-    if (status === "loading") return <p>Loading...</p>;
+
+    if (status === "loading") {
+        return (
+            <div className="flex items-center justify-center w-screen h-screen bg-background">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
 
     return (
         <SidebarProvider >
@@ -89,7 +94,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             <div className="flex items-center gap-4">
                                 <Button
                                     variant="outline"
-                                    onClick={() => handlelogut()}
+                                    onClick={() => handleLogout()}
                                 >
                                     로그아웃
                                 </Button>

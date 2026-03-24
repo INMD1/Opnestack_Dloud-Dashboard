@@ -58,7 +58,14 @@ export default function InstanceCreatePage() {
                     fetch("/api/v1/extension/servers").then(res => res.json()),
                 ]);
 
-                if (flavorsRes && flavorsRes.flavors) setFlavors(flavorsRes.flavors);
+                if (flavorsRes && flavorsRes.flavors) {
+                    const sorted = [...flavorsRes.flavors].sort((a: components["schemas"]["Flavor"], b: components["schemas"]["Flavor"]) => {
+                        if (a.vcpus !== b.vcpus) return a.vcpus - b.vcpus;
+                        if (a.ram !== b.ram) return a.ram - b.ram;
+                        return a.disk - b.disk;
+                    });
+                    setFlavors(sorted);
+                }
                 if (imagesRes && imagesRes.images) {
                     setImages(imagesRes.images);
                     if (imagesRes.images.length > 0) setSelectedImage(imagesRes.images[0].id);

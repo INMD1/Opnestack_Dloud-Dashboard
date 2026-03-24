@@ -120,10 +120,11 @@ export const authOptions: AuthOptions = {
         token.email = user.email;
         token.keystone_token = user.keystone_token;
         token.exp = user.session?.exp;
+        token.skyline_session = user.session;
       }
 
-      // JWT 만료 시 토큰 초기화
-      if (token.exp && Date.now() / 1000 > token.exp) {
+      // Keystone 토큰 만료 시 세션 초기화 → 미들웨어가 로그인 페이지로 리다이렉트
+      if (token.exp && Date.now() / 1000 > (token.exp as number)) {
         return {};
       }
       return token;
