@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { createHash } from "crypto";
-import { verifiactionToken, pendingUsers } from "@/db/schema";
+import { verifiactionToken, pendingUsers, allowedEmails } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import nodemailer from 'nodemailer';
 
@@ -131,13 +131,24 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // 이메일 도메인 검증
+        // 이메일 도메인 검증: 학교 이메일이거나 관리자가 허용한 이메일인지 확인
         const emailDomain = email.split('@')[1];
-        if (emailDomain !== 'office.deu.ac.kr') {
-            return NextResponse.json(
-                { error: "동의대학교 이메일(office.deu.ac.kr)만 사용 가능합니다." },
-                { status: 400 }
-            );
+        const isSchoolEmail = emailDomain === 'office.deu.ac.kr';
+
+        if (!isSchoolEmail) {
+            // 관리자 허용 목록에 있는지 확인
+            const allowed = await db
+                .select()
+                .from(allowedEmails)
+                .where(eq(allowedEmails.email, email.toLowerCase()))
+                .limit(1);
+
+            if (allowed.length === 0) {
+                return NextResponse.json(
+                    { error: "동의대학교 이메일(office.deu.ac.kr)이나 관리자가 허용한 이메일만 사용 가능합니다." },
+                    { status: 400 }
+                );
+            }
         }
 
         // 토큰 생성 (Node.js crypto 사용)
