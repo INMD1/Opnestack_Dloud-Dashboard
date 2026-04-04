@@ -29,7 +29,6 @@ export async function POST(req: NextRequest) {
             } });
   
         if (error) {
-            console.log(JSON.stringify(error));
             let errMsg = "비밀번호 변경에 실패했습니다.";
             if (typeof error === "object" && error !== null) {
                 errMsg = (error as any)?.error?.message || (error as any)?.message || errMsg;
