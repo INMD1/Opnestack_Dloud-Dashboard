@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
+import { getSkylineClient } from "@/lib/skyline";
 
 export async function POST(req: NextRequest) {
     try {
@@ -11,46 +12,30 @@ export async function POST(req: NextRequest) {
 
         const body = await req.json();
         const { current_password, new_password } = body;
-
+   
         if (!current_password || !new_password) {
             return new NextResponse(
-                JSON.stringify({ message: "현재 비밀번호와 새 비밀번호를 입력해주세요." }),
+                JSON.stringify({ message: "현재 비밀번호와 새 비밀번호를 입력해주세요.", body }),
                 { status: 400 }
             );
         }
 
-        const keystoneUrl = process.env.KEYSTONE_URL;
-        if (!keystoneUrl) {
-            return new NextResponse(
-                JSON.stringify({ message: "서버 설정 오류: KEYSTONE_URL이 설정되지 않았습니다." }),
-                { status: 500 }
-            );
-        }
-
-        const userId = session.user.id;
-
-        // Keystone Identity API v3: 사용자 비밀번호 변경
-        const keystoneRes = await fetch(`${keystoneUrl}/v3/users/${userId}/password`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-Auth-Token": session.keystone_token,
-            },
-            body: JSON.stringify({
+        const skylineClient = getSkylineClient(session.keystone_token);
+        const { data, error, response } = await (skylineClient as any).POST("/api/v1/change-password", { body: {
                 user: {
                     password: new_password,
                     original_password: current_password,
                 },
-            }),
-        });
-
-        if (!keystoneRes.ok) {
+            } });
+  
+        if (error) {
+            console.log(JSON.stringify(error));
             let errMsg = "비밀번호 변경에 실패했습니다.";
-            try {
-                const errData = await keystoneRes.json();
-                errMsg = errData?.error?.message || errMsg;
-            } catch { /* ignore */ }
-            return new NextResponse(JSON.stringify({ message: errMsg }), { status: keystoneRes.status });
+            if (typeof error === "object" && error !== null) {
+                errMsg = (error as any)?.error?.message || (error as any)?.message || errMsg;
+            }
+            const statusCode = response?.status || 500;
+            return new NextResponse(JSON.stringify({ message: errMsg }), { status: statusCode });
         }
 
         // Authentik 비밀번호 동기화 (실패해도 전체 흐름은 성공으로 처리)
