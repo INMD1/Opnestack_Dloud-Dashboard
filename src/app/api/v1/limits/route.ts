@@ -16,36 +16,12 @@ export async function GET() {
 
         if (error) {
             logger.devError("Backend limits error:", error);
-            // Return default quota structure to prevent frontend crashes
-            return new NextResponse(JSON.stringify(getDefaultQuotas()), { status: 200 });
+            return new NextResponse(JSON.stringify({ message: "Failed to fetch limits" }), { status: 502 });
         }
 
         return new NextResponse(JSON.stringify(data), { status: 200 });
     } catch (err) {
         logger.devError("Get Limit Summary API error:", err);
-        // Return default quota structure to prevent frontend crashes
-        return new NextResponse(JSON.stringify(getDefaultQuotas()), { status: 200 });
+        return new NextResponse(JSON.stringify({ message: "Internal server error" }), { status: 500 });
     }
-}
-
-function getDefaultQuotas() {
-    const defaultQuota = { in_use: 0, limit: 0, reserved: 0 };
-    return {
-        quotas: {
-            instances: defaultQuota,
-            cores: defaultQuota,
-            ram: defaultQuota,
-            volumes: defaultQuota,
-            snapshots: defaultQuota,
-            gigabytes: defaultQuota,
-            floatingip: defaultQuota,
-            network: defaultQuota,
-            port: defaultQuota,
-            router: defaultQuota,
-            subnet: defaultQuota,
-            security_group: defaultQuota,
-            security_group_rule: defaultQuota,
-            port_forwardings: defaultQuota,
-        }
-    };
 }

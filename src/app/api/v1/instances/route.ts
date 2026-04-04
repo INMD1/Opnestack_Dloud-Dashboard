@@ -23,25 +23,15 @@ export async function POST(req: NextRequest) {
 
         const body = await req.json();
         const skylineClient = getSkylineClient(session.keystone_token);
-        const { data, error } = await skylineClient.POST("/api/v1/instances", { body });
+        const { data, error, response } = await skylineClient.POST("/api/v1/instances", { body });
 
         if (error) {
-            return new NextResponse(JSON.stringify(error), { status: 500 });
+            // 백엔드의 실제 상태 코드를 전달 (409 중복 이름 등)
+            const statusCode = response?.status || 500;
+            return new NextResponse(JSON.stringify(error), { status: statusCode });
         }
 
-        let instanceIp = null;
-        if (data && data.instance && data.instance.addresses) {
-            // Assuming the first network's first IP is the internal IP
-            const networkNames = Object.keys(data.instance.addresses);
-            if (networkNames.length > 0) {
-                const firstNetwork = data.instance.addresses[networkNames[0]];
-                if (firstNetwork.length > 0) {
-                    instanceIp = firstNetwork[0].addr;
-                }
-            }
-        }
-
-        return new NextResponse(JSON.stringify({ ...data, instance_ip: instanceIp }), { status: 202 });
+        return new NextResponse(JSON.stringify(data), { status: 202 });
     } catch (err) {
         logger.devError("Create Instance API error:", err);
         return new NextResponse(JSON.stringify({ message: "Create Instance API failed" }), { status: 500 });

@@ -162,18 +162,19 @@ export default function ConsolePage() {
         // Fetch limits with error handling
         try {
           const res = await fetch("/api/v1/limits");
-          const data = await res.json();
-
-          // Safely access quotas and port_forwardings
-          if (data?.quotas) {
-            // Create port limit object with the correct count
-            if (data.quotas.port_forwardings) {
-              setPortlimit({ total_count: portForwardCount, limit: data.quotas.port_forwardings.limit });
-              data.quotas.port_forwardings.in_use = portForwardCount;
-            }
-            setLimits(data.quotas);
+          if (!res.ok) {
+            console.error("Limits API error:", res.status);
           } else {
-            console.error("Invalid limits data structure");
+            const data = await res.json();
+            if (data?.quotas) {
+              if (data.quotas.port_forwardings) {
+                setPortlimit({ total_count: portForwardCount, limit: data.quotas.port_forwardings.limit });
+                data.quotas.port_forwardings.in_use = portForwardCount;
+              }
+              setLimits(data.quotas);
+            } else {
+              console.error("Invalid limits data structure");
+            }
           }
         } catch (error) {
           console.error("Error fetching limits:", error);

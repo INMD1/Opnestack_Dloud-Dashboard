@@ -1,11 +1,21 @@
 import { withAuth } from "next-auth/middleware";
 
 export default withAuth({
+  callbacks: {
+    authorized: ({ token }) => {
+      if (!token?.keystone_token) return false;
+      if (token.exp && Date.now() / 1000 > (token.exp as number)) return false;
+      return true;
+    },
+  },
   pages: {
-    signIn: "/auth/login", // 로그인 페이지
+    signIn: "/auth/login",
   },
 });
 
 export const config = {
-  matcher: ["/console/:path*"], // 보호할 경로
+  matcher: [
+    "/console/:path*",
+    "/api/v1/:path*",
+  ],
 };

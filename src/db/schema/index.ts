@@ -38,6 +38,15 @@ export const admins = sqliteTable('admins', {
     created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
+// 관리자가 허용한 이메일 목록 (학교 이메일 외 가입 허용)
+export const allowedEmails = sqliteTable('allowed_emails', {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    email: text('email').notNull().unique(),
+    description: text('description'), // 허용 사유 (선택)
+    added_by: text('added_by').notNull(), // 추가한 관리자 user_id
+    created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
 // 공지사항
 export const announcements = sqliteTable('announcements', {
     id: integer('id').primaryKey({ autoIncrement: true }),

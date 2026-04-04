@@ -15,9 +15,12 @@ export const authOptions: AuthOptions = {
             password: { label: "비밀번호", type: "password" },
           },
           async authorize(credentials) {
+            const devUser = process.env.DEV_USERNAME;
+            const devPass = process.env.DEV_PASSWORD;
             if (
-              credentials?.username === "admin" &&
-              credentials?.password === "1234"
+              devUser && devPass &&
+              credentials?.username === devUser &&
+              credentials?.password === devPass
             ) {
               return { id: "1", name: "개발 관리자" };
             }
@@ -26,7 +29,7 @@ export const authOptions: AuthOptions = {
         }),
       ]
       : [
-        // 운영 모드
+        // 운영 모드 - 일반 로그인
         CredentialsProvider({
           name: "Skyline",
           credentials: {
@@ -53,7 +56,6 @@ export const authOptions: AuthOptions = {
               if (!res.ok) return null;
 
               const data = await res.json();
-              console.log(data);
 
               return {
                 id: data.user.id,
@@ -64,6 +66,39 @@ export const authOptions: AuthOptions = {
               };
             } catch (err) {
               console.error("Skyline login error:", err);
+              return null;
+            }
+          },
+        }),
+        // 운영 모드 - SSO 토큰 로그인 (Authentik WebSSO 콜백용)
+        CredentialsProvider({
+          id: "sso-token",
+          name: "SSO Token",
+          credentials: {
+            keystone_token: { label: "Keystone Token", type: "text" },
+          },
+          async authorize(credentials) {
+            if (!credentials?.keystone_token) return null;
+            try {
+              const res = await fetch(
+                `${process.env.SKYLINE_API_URL}/api/v1/profile`,
+                {
+                  headers: {
+                    Authorization: credentials.keystone_token,
+                  },
+                }
+              );
+              if (!res.ok) return null;
+              const data = await res.json();
+              return {
+                id: data.user?.id ?? "sso-user",
+                name: data.user?.name ?? data.name,
+                email: data.user?.email ?? data.email ?? "",
+                keystone_token: credentials.keystone_token,
+                session: data,
+              };
+            } catch (err) {
+              console.error("SSO token auth error:", err);
               return null;
             }
           },
@@ -85,10 +120,11 @@ export const authOptions: AuthOptions = {
         token.email = user.email;
         token.keystone_token = user.keystone_token;
         token.exp = user.session?.exp;
+        token.skyline_session = user.session;
       }
 
-      // JWT 만료 시 토큰 초기화
-      if (token.exp && Date.now() / 1000 > token.exp) {
+      // Keystone 토큰 만료 시 세션 초기화 → 미들웨어가 로그인 페이지로 리다이렉트
+      if (token.exp && Date.now() / 1000 > (token.exp as number)) {
         return {};
       }
       return token;

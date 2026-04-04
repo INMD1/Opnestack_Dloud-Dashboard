@@ -33,7 +33,7 @@ import { Label } from "@/components/ui/label";
 interface Keypair {
   name: string;
   fingerprint: string;
-  created_at: string;
+  created_at?: string;
 }
 
 export default function KeypairPage() {
@@ -83,6 +83,14 @@ export default function KeypairPage() {
       if (data) {
         setPrivateKey(data.private_key);
         setCreateDialogOpen(false);
+        // 자동 다운로드
+        const element = document.createElement("a");
+        const file = new Blob([data.private_key], { type: 'text/plain' });
+        element.href = URL.createObjectURL(file);
+        element.download = `${newKeypairName}.pem`;
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
         setPrivateKeyDialogOpen(true);
         fetchKeypairs(); // Refresh the list
       }
@@ -200,7 +208,9 @@ export default function KeypairPage() {
                   <TableRow key={keypair.name}>
                     <TableCell className="font-medium">{keypair.name}</TableCell>
                     <TableCell>{keypair.fingerprint}</TableCell>
-                    <TableCell>{new Date(keypair.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      {keypair.created_at ? new Date(keypair.created_at).toLocaleDateString() : "-"}
+                    </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

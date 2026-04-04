@@ -3,9 +3,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { getSkylineClient } from "@/lib/skyline";
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams
     const instance_id = searchParams.get('instance_id');
+
+    if (!instance_id || !UUID_REGEX.test(instance_id)) {
+        return new NextResponse(JSON.stringify({ message: "Invalid instance_id" }), { status: 400 });
+    }
+
     try {
         const session = await getServerSession(authOptions);
         if (!session?.keystone_token) {

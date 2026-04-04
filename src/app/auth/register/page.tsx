@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -34,6 +34,21 @@ export default function RegisterPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    const [ssoEnabled, setSsoEnabled] = useState(false);
+    const [ssoUrl, setSsoUrl] = useState("");
+
+    useEffect(() => {
+        fetch(`/api/v1/sso`)
+            .then((r) => r.json())
+            .then((data) => {
+                if (data.enable_sso && data.protocols?.length > 0) {
+                    setSsoEnabled(true);
+                    setSsoUrl(data.protocols[0].url);
+                }
+            })
+            .catch((e) => console.error("SSO check error:", e));
+    }, []);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -87,8 +102,8 @@ export default function RegisterPage() {
     return (
         <div className="flex h-screen overscroll-contain">
             {/* 회원가입 폼 */}
-            <div className="w-[53vw] flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
-                <div className="px-24 w-full max-h-screen overflow-y-auto py-8">
+            <div className="w-full md:w-[53vw] flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
+                <div className="px-6 md:px-24 w-full max-h-screen overflow-y-auto py-8">
                     <div className="mb-6">
                         <h1 className="text-4xl font-bold">
                             <span className="gradient-text">회원가입</span>
@@ -202,9 +217,40 @@ export default function RegisterPage() {
                                     className="w-full gradient-primary text-white hover-lift"
                                     disabled={isLoading}
                                 >
-                                    {isLoading ? "처리 중..." : "회원가입"}
+                                    {isLoading ? "처리 중..." : "일반 회원가입"}
                                 </Button>
-                                <p className="text-xs text-muted-foreground">*회원가입이 되면 자동으로 <a href="/privacy-policy" className="text-primary">개인정보처리방침</a>과 <a href="/TermsofUse" className="text-primary">서비스 이용약관</a>에 동의한걸로 처리됩니다.</p>
+
+                                {ssoEnabled && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="w-full"
+                                        onClick={() => {
+                                            localStorage.setItem("sso_intent", "register");
+                                            window.location.href = ssoUrl;
+                                        }}
+                                    >
+                                        Authentik으로 회원가입 (SSO)
+                                    </Button>
+                                )}
+
+                                <p className="text-xs text-muted-foreground mt-2">*회원가입이 되면 자동으로 <a href="/privacy-policy" className="text-primary">개인정보처리방침</a>과 <a href="/TermsofUse" className="text-primary">서비스 이용약관</a>에 동의한걸로 처리됩니다.</p>
+
+                                {ssoEnabled && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="w-full"
+                                        onClick={() => {
+                                            localStorage.setItem("sso_intent", "register");
+                                            window.location.href = ssoUrl;
+                                        }}
+                                    >
+                                        Authentik으로 회원가입 (SSO)
+                                    </Button>
+                                )}
+
+                                <p className="text-xs text-muted-foreground mt-2">*회원가입이 되면 자동으로 <a href="/privacy-policy" className="text-primary">개인정보처리방침</a>과 <a href="/TermsofUse" className="text-primary">서비스 이용약관</a>에 동의한걸로 처리됩니다.</p>
                             </form>
                         </Form>
 
@@ -221,7 +267,7 @@ export default function RegisterPage() {
             </div>
 
             {/* 오른쪽 배경 이미지 */}
-            <div className="w-full relative overflow-hidden">
+            <div className="hidden md:block w-full relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20" />
                 <Image
                     className="h-full w-full object-cover object-center mix-blend-overlay"

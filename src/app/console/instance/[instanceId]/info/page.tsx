@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, Plus, Terminal } from "lucide-react";
+import { Trash2, Plus, Terminal, Copy, Check } from "lucide-react";
 import { toaster } from "@/components/ui/toaster";
 import {
     Accordion,
@@ -45,6 +45,7 @@ interface Instance {
     port_forwardings?: PortForwarding[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     addresses?: any;
+    os_name?: string;
 }
 
 export default function InstanceInfoPage() {
@@ -61,6 +62,14 @@ export default function InstanceInfoPage() {
     const [externalPort, setExternalPort] = useState("");
     const [protocol, setProtocol] = useState("tcp");
     const [isAdding, setIsAdding] = useState(false);
+    const [copiedIp, setCopiedIp] = useState<string | null>(null);
+
+    const handleCopyIp = (ip: string) => {
+        navigator.clipboard.writeText(ip).then(() => {
+            setCopiedIp(ip);
+            setTimeout(() => setCopiedIp(null), 2000);
+        });
+    };
 
     const fetchInstanceData = useCallback(async () => {
         try {
@@ -368,7 +377,18 @@ export default function InstanceInfoPage() {
                     )}
                 </div>
             </header>
-
+            <Alert className="mb-5 flex justify-between border-sky-200 bg-sky-50 text-black dark:border-blue-900 dark:bg-sky-950 dark:text-sky-50">
+                <div>
+                    <div className="flex items-center gap-2">
+                        <Terminal />
+                        <AlertTitle>필독!</AlertTitle>
+                    </div>
+                    <AlertDescription>
+                        SSH 접속하는 방법
+                    </AlertDescription>
+                </div>
+                <Button onClick={() => window.open("https://docs.dcloud.p-e.kr/docs/howtoaccess")}>도움말 이동</Button>
+            </Alert>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 {/* 포트포워딩 관리 */}
                 <Card>
@@ -396,7 +416,21 @@ export default function InstanceInfoPage() {
                                             {portForwardings.map((pf) => (
                                                 <TableRow key={pf.id}>
                                                     <TableCell className="font-mono text-sm">
-                                                        {pf.proxy_external_ip}
+                                                        <div className="flex items-center gap-1">
+                                                            <span>{pf.proxy_external_ip}</span>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-6 w-6 p-0"
+                                                                onClick={() => handleCopyIp(pf.proxy_external_ip)}
+                                                                title="IP 복사"
+                                                            >
+                                                                {copiedIp === pf.proxy_external_ip
+                                                                    ? <Check className="h-3 w-3 text-green-500" />
+                                                                    : <Copy className="h-3 w-3 text-muted-foreground" />
+                                                                }
+                                                            </Button>
+                                                        </div>
                                                     </TableCell>
                                                     <TableCell>{pf.proxy_external_port}</TableCell>
                                                     <TableCell>{pf.user_vm_internal_port}</TableCell>
@@ -495,6 +529,7 @@ export default function InstanceInfoPage() {
                                 <p className="text-lg"><strong>내부 IP: </strong>{instance.addresses["private-net"][0].addr}</p>
                                 <p className="text-lg"><strong>상태: </strong>{instance.status}</p>
                                 <p className="text-lg"><strong>생성일: </strong>{instance.created}</p>
+                                <p className="text-lg"><strong>OS: </strong>{instance.os_name || "Unknown"}</p>
                             </div>
                         ) : (
                             <p className="text-sm text-muted-foreground">인스턴스 정보를 불러올 수 없습니다.</p>

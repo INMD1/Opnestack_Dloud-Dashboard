@@ -29,6 +29,7 @@ export default function InstanceCreatePage() {
     const [selectedKeypair, setSelectedKeypair] = useState<string>("");
     const [selectedNetwork, setSelectedNetwork] = useState<string>("");
     const [loading, setLoading] = useState(true);
+    const [existingInstanceNames, setExistingInstanceNames] = useState<string[]>([]);
     const [additionalPorts, setAdditionalPorts] = useState<{ external: string, internal: string }[]>([]);
     const [newExternalPort, setNewExternalPort] = useState("");
     const [newInternalPort, setNewInternalPort] = useState("");
@@ -49,14 +50,22 @@ export default function InstanceCreatePage() {
         async function fetchData() {
             setLoading(true);
             try {
-                const [flavorsRes, imagesRes, keypairsRes, networksRes] = await Promise.all([
+                const [flavorsRes, imagesRes, keypairsRes, networksRes, instancesRes] = await Promise.all([
                     fetch("/api/v1/flavors").then(res => res.json()),
                     fetch("/api/v1/images").then(res => res.json()),
                     fetch("/api/v1/keypairs").then(res => res.json()),
                     fetch("/api/v1/networks").then(res => res.json()),
+                    fetch("/api/v1/extension/servers").then(res => res.json()),
                 ]);
 
-                if (flavorsRes && flavorsRes.flavors) setFlavors(flavorsRes.flavors);
+                if (flavorsRes && flavorsRes.flavors) {
+                    const sorted = [...flavorsRes.flavors].sort((a: components["schemas"]["Flavor"], b: components["schemas"]["Flavor"]) => {
+                        if (a.vcpus !== b.vcpus) return a.vcpus - b.vcpus;
+                        if (a.ram !== b.ram) return a.ram - b.ram;
+                        return a.disk - b.disk;
+                    });
+                    setFlavors(sorted);
+                }
                 if (imagesRes && imagesRes.images) {
                     setImages(imagesRes.images);
                     if (imagesRes.images.length > 0) setSelectedImage(imagesRes.images[0].id);
@@ -70,6 +79,10 @@ export default function InstanceCreatePage() {
                     const filteredNetworks = networksRes.networks.filter((network: any) => network.name === 'private-net');
                     setNetworks(filteredNetworks);
                     if (filteredNetworks.length > 0) setSelectedNetwork(filteredNetworks[0].id!);
+                }
+                if (instancesRes && instancesRes.servers) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    setExistingInstanceNames(instancesRes.servers.map((s: any) => s.name));
                 }
 
             } catch (error) {
@@ -88,6 +101,8 @@ export default function InstanceCreatePage() {
             protocol: "tcp"
         })).filter(p => !isNaN(p.external_port) && !isNaN(p.internal_port));
 
+        const osName = images.find((image) => image.id === selectedImage)?.name;
+
         const instanceData = {
             name: instanceName,
             image_id: selectedImage,
@@ -95,12 +110,16 @@ export default function InstanceCreatePage() {
             key_name: selectedKeypair,
             network_id: selectedNetwork,
             additional_ports: portForwardings,
-            volume_size: cinervolume
+            volume_size: cinervolume,
+            os_name: osName ? osName : "Undefined"
         };
 
-        console.log(instanceData);
         if (!instanceName || !selectedFlavor || !selectedImage || !selectedNetwork || !selectedKeypair) {
             alert("모든 필드를 정확히 선택하고 인스턴스 이름을 입력해주세요.");
+            return;
+        }
+        if (existingInstanceNames.includes(instanceName)) {
+            alert("이미 동일한 이름의 인스턴스가 존재합니다. 다른 이름을 사용해주세요.");
             return;
         }
 
@@ -114,10 +133,16 @@ export default function InstanceCreatePage() {
             });
 
             if (res.status === 202) { // HTTP 202 Accepted
-                const responseData = await res.json();
-                const instanceId = responseData.id;
-                // instanceId를 가지고 상태를 보여줄 페이지로 이동
-                window.location.href = `/console/instance/${instanceId}/status`;
+                // localStorage에 생성중인 인스턴스 이름 저장
+                const building = JSON.parse(localStorage.getItem('buildingInstances') || '[]') as string[];
+                building.push(instanceName);
+                localStorage.setItem('buildingInstances', JSON.stringify(building));
+                // 인스턴스 이름으로 상태 페이지 이동 (백그라운드 생성이므로 ID가 아직 없음)
+                const encodedName = encodeURIComponent(instanceName);
+                window.location.href = `/console/instance/${encodedName}/status`;
+            } else if (res.status === 409) { // 중복 이름
+                const error = await res.json();
+                alert(error.detail || '이미 동일한 이름의 인스턴스가 존재합니다.');
             } else {
                 const error = await res.json();
                 alert(`인스턴스 생성 요청 실패: ${error.detail || '알 수 없는 오류'}`);
@@ -153,11 +178,17 @@ export default function InstanceCreatePage() {
                                 placeholder="my-new-instance"
                                 value={instanceName}
                                 onChange={(e) => setInstanceName(e.target.value)}
-                                className="max-w-sm"
+                                className={`max-w-sm ${instanceName && existingInstanceNames.includes(instanceName) ? 'border-red-500' : ''}`}
                             />
-                            <div className="text-sm text-muted-foreground mt-2">
-                                * 영어 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.
-                            </div>
+                            {instanceName && existingInstanceNames.includes(instanceName) ? (
+                                <div className="text-sm text-red-500 mt-2">
+                                    이미 동일한 이름의 인스턴스가 존재합니다.
+                                </div>
+                            ) : (
+                                <div className="text-sm text-muted-foreground mt-2">
+                                    * 영어 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 
@@ -209,7 +240,7 @@ export default function InstanceCreatePage() {
                                 <select
                                     id="os-select"
                                     value={selectedImage}
-                                    onChange={(e) => setSelectedImage(e.target.value)}
+                                    onChange={(e) => { setSelectedImage(e.target.value)}}
                                     className="w-full p-2 border rounded-md bg-background mt-1"
                                     disabled={loading || images.length === 0}
                                 >
@@ -226,7 +257,7 @@ export default function InstanceCreatePage() {
                                 <select
                                     id="network-select"
                                     value={selectedNetwork}
-                                    onChange={(e) => setSelectedNetwork(e.target.value)}
+                                    onChange={(e) =>  setSelectedNetwork(e.target.value)}
                                     className="w-full p-2 border rounded-md bg-background mt-1"
                                     disabled={loading || networks.length === 0}
                                 >
