@@ -72,7 +72,7 @@ export default function InstanceCreatePage() {
                 }
                 if (keypairsRes && keypairsRes.keypairs) {
                     setKeypairs(keypairsRes.keypairs);
-                    if (keypairsRes.keypairs.length > 0) setSelectedKeypair(keypairsRes.keypairs[0].name);
+                    // 키페어가 있어도 기본 선택하지 않음 (비밀번호 로그인 기본)
                 }
                 if (networksRes && networksRes.networks) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -107,15 +107,15 @@ export default function InstanceCreatePage() {
             name: instanceName,
             image_id: selectedImage,
             flavor_id: selectedFlavor,
-            key_name: selectedKeypair,
+            key_name: selectedKeypair || null,  // 키페어 없으면 null 전달
             network_id: selectedNetwork,
             additional_ports: portForwardings,
             volume_size: cinervolume,
             os_name: osName ? osName : "Undefined"
         };
 
-        if (!instanceName || !selectedFlavor || !selectedImage || !selectedNetwork || !selectedKeypair) {
-            alert("모든 필드를 정확히 선택하고 인스턴스 이름을 입력해주세요.");
+        if (!instanceName || !selectedFlavor || !selectedImage || !selectedNetwork) {
+            alert("인스턴스 이름, 성능, 운영체제, 네트워크를 선택해주세요.");
             return;
         }
         if (existingInstanceNames.includes(instanceName)) {
@@ -284,18 +284,17 @@ export default function InstanceCreatePage() {
                                     value={selectedKeypair}
                                     onChange={(e) => setSelectedKeypair(e.target.value)}
                                     className="w-full p-2 border rounded-md bg-background"
-                                    disabled={loading || keypairs.length === 0}
+                                    disabled={loading}
                                 >
+                                    <option value="">없음 (비밀번호로만 로그인)</option>
                                     {keypairs.map((keypair) => (
                                         <option key={keypair.name} value={keypair.name}>
                                             {keypair.name}
                                         </option>
                                     ))}
                                 </select>
-                                {keypairs.length === 0 && !loading && <p className="text-sm text-muted-foreground mt-2">사용 가능한 키페어가 없습니다.</p>}
-                                <p className="text-sm text-muted-foreground mt-2">*키페어는 SSH로 접속할때 자기자신을 인증하는 보안키입니다.</p>
-                                <p className="text-sm text-muted-foreground mt-2">*만약 생성후 키페어를 분실한경우 다시 VM을 재생성 해야할수 있습니다.</p>
-
+                                <p className="text-sm text-muted-foreground mt-2">* 키페어를 선택하지 않으면 비밀번호로만 SSH 접속이 가능합니다.</p>
+                                <p className="text-sm text-muted-foreground mt-1">* 비밀번호는 인스턴스 생성 완료 후 확인할 수 있습니다.</p>
                             </CardContent>
                         </Card>
 
