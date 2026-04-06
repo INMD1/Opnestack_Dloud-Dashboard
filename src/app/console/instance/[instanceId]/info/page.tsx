@@ -46,6 +46,8 @@ interface Instance {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     addresses?: any;
     os_name?: string;
+    default_user?: string;
+    default_password?: string;
 }
 
 export default function InstanceInfoPage() {
@@ -530,6 +532,56 @@ export default function InstanceInfoPage() {
                                 <p className="text-lg"><strong>상태: </strong>{instance.status}</p>
                                 <p className="text-lg"><strong>생성일: </strong>{instance.created}</p>
                                 <p className="text-lg"><strong>OS: </strong>{instance.os_name || "Unknown"}</p>
+
+                                {/* 로그인 정보 섹션 */}
+                                {(instance.default_user || instance.default_password) && (
+                                    <div className="mt-4 p-4 rounded-lg border border-green-500/30 bg-green-950/10 dark:bg-green-950/20">
+                                        <h3 className="text-sm font-semibold text-green-600 dark:text-green-400 mb-3 flex items-center gap-2">
+                                            🔑 초기 SSH 접속 정보
+                                        </h3>
+                                        <div className="space-y-2">
+                                            {instance.default_user && (
+                                                <div className="flex items-center justify-between bg-black/10 dark:bg-black/30 rounded px-3 py-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs text-muted-foreground">사용자</span>
+                                                        <span className="font-mono text-sm font-semibold">{instance.default_user}</span>
+                                                    </div>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-7 px-2 text-xs"
+                                                        onClick={() => handleCopyIp(instance.default_user!)}
+                                                    >
+                                                        {copiedIp === instance.default_user
+                                                            ? <Check className="h-3 w-3 text-green-500" />
+                                                            : <Copy className="h-3 w-3" />}
+                                                    </Button>
+                                                </div>
+                                            )}
+                                            {instance.default_password && (
+                                                <div className="flex items-center justify-between bg-black/10 dark:bg-black/30 rounded px-3 py-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs text-muted-foreground">비밀번호</span>
+                                                        <span className="font-mono text-sm font-semibold tracking-wider">{instance.default_password}</span>
+                                                    </div>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-7 px-2 text-xs"
+                                                        onClick={() => handleCopyIp(instance.default_password!)}
+                                                    >
+                                                        {copiedIp === instance.default_password
+                                                            ? <Check className="h-3 w-3 text-green-500" />
+                                                            : <Copy className="h-3 w-3" />}
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-muted-foreground mt-2">
+                                            ⚠️ 접속 후 보안을 위해 비밀번호를 변경하는 것을 권장합니다.
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <p className="text-sm text-muted-foreground">인스턴스 정보를 불러올 수 없습니다.</p>
@@ -546,13 +598,7 @@ export default function InstanceInfoPage() {
                         <CardDescription>브라우저에서 VM에 직접 접속할 수 있습니다.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Alert variant="destructive" className="mb-4">
-                            <Terminal />
-                            <AlertTitle>안내사항</AlertTitle>
-                            <AlertDescription>
-                                VNC 접속을 할때 나오는 비빌번호 입력은 처음에 Key로 로그인후 내부에서 비밀번호 설정을 해줘야 입력가능합니다
-                            </AlertDescription>
-                        </Alert>
+
                         <Button onClick={() => window.open(novnc)}>VNC 접속</Button>
                         {/* {novnc ? (
                             <iframe
