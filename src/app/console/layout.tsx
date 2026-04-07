@@ -8,7 +8,7 @@ import Link from "next/link";
 import ProfileChecker from "../exten/ProfileChecker";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, LogOut, Cpu } from "lucide-react";
 
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -67,48 +67,69 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
     if (status === "loading") {
         return (
-            <div className="flex items-center justify-center w-screen h-screen bg-background">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <div className="flex items-center justify-center w-screen h-screen bg-[#10131a]">
+                <Loader2 className="h-10 w-10 animate-spin text-[#b0c6ff]" />
             </div>
         );
     }
 
     return (
-        <SidebarProvider >
+        <SidebarProvider>
             <ProfileChecker />
             <AppSidebar />
-            <div className=" grid-flow-col w-screen h-screen">
-                <div className="pl-10 pr-10 pt-10 flex justify-end items-center ">
-                    {buildingInstances.length > 0 && (
-                        <div
-                            className="flex items-center gap-2 mr-4 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-sm cursor-pointer hover:bg-blue-100 transition-colors"
-                            onClick={() => router.push(`/console/instance/${encodeURIComponent(buildingInstances[0])}/status`)}
-                            title={`생성 중: ${buildingInstances.join(', ')}`}
-                        >
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>인스턴스 생성 중 ({buildingInstances.length})</span>
+            <div className="relative flex flex-col flex-1 w-full min-h-screen bg-[#10131a] overflow-hidden">
+                {/* Global Top Header */}
+                <header className="sticky top-0 z-40 w-full h-16 bg-[#10131a]/80 backdrop-blur-xl border-b border-[#424655]/10 px-6 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        {/* Mobile sidebar toggle can go here if needed */}
+                        <div className="hidden md:flex items-center gap-2 text-[#c2c6d7]/40 text-[10px] font-bold uppercase tracking-widest">
+                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                            System Operational
                         </div>
-                    )}
-                    <div>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        {buildingInstances.length > 0 && (
+                            <div
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#b0c6ff]/10 border border-[#b0c6ff]/20 text-[#b0c6ff] text-xs font-bold cursor-pointer hover:bg-[#b0c6ff]/20 transition-all shadow-[0_0_15px_rgba(176,198,255,0.1)]"
+                                onClick={() => router.push(`/console/instance/${encodeURIComponent(buildingInstances[0])}/status`)}
+                                title={`생성 중: ${buildingInstances.join(', ')}`}
+                            >
+                                <Cpu className="h-3.5 w-3.5 animate-pulse" />
+                                <span>BUILDING ({buildingInstances.length})</span>
+                            </div>
+                        )}
+                        
                         {session ? (
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="hidden sm:flex flex-col items-end mr-2">
+                                    <span className="text-xs font-bold text-[#e1e2eb]">{session.user?.name}</span>
+                                    <span className="text-[9px] text-[#c2c6d7]/50 font-black uppercase tracking-tighter">Verified User</span>
+                                </div>
                                 <Button
-                                    variant="outline"
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={() => handleLogout()}
+                                    className="text-[#c2c6d7] hover:text-[#ffb4ab] hover:bg-[#93000a]/10 transition-all gap-2 px-3 border border-[#424655]/20"
                                 >
-                                    로그아웃
+                                    <LogOut className="h-4 w-4" />
+                                    <span className="hidden sm:inline">Logout</span>
                                 </Button>
                             </div>
                         ) : (
-                            <Link href="/auth/login" className="text-blue-600 hover:underline">
-                                로그인
+                            <Link href="/auth/login">
+                                <Button size="sm" className="bg-gradient-to-r from-[#b0c6ff] to-[#558dff] text-[#001945] font-bold">
+                                    Login
+                                </Button>
                             </Link>
                         )}
                     </div>
-                </div>
-                <div className="items-start">
+                </header>
+
+                {/* Main Content Area */}
+                <main className="flex-1 overflow-y-auto">
                     {children}
-                </div>
+                </main>
             </div>
         </SidebarProvider>
     )

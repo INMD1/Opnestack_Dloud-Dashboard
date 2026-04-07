@@ -48,6 +48,18 @@ interface PortForward {
     status: string;
 }
 
+interface FloatingIPStatus {
+    ip: string;
+    role: string;
+    active_rules: number;
+    total_rules: number;
+    max_rules: number;
+    usage_percent: number;
+    available_ports: number;
+    port_range: number[];
+    ports: number[];
+}
+
 interface OriginData {
     fixed_ips?: Array<{ ip_address: string }>;
     device_owner?: string;
@@ -56,6 +68,7 @@ interface OriginData {
 export default function NetworkViewPage() {
     const [ips, setIps] = useState<components["schemas"]["PortsResponseBase"][]>([]);
     const [portForwards, setPortForwards] = useState<PortForward[]>([]);
+    const [floatingIpStatus, setFloatingIpStatus] = useState<FloatingIPStatus[]>([]);
     const [loading, setLoading] = useState(true);
     const [isRequestDialogOpen, setRequestDialogOpen] = useState(false);
     const [isPortForwardDialogOpen, setPortForwardDialogOpen] = useState(false);
@@ -98,10 +111,11 @@ export default function NetworkViewPage() {
     async function fetchData() {
         setLoading(true);
         try {
-            const [portsRes, portForwardsRes, limitsRes] = await Promise.all([
+            const [portsRes, portForwardsRes, limitsRes, floatingIpsRes] = await Promise.all([
                 fetch("/api/v1/extension/ports").then(res => res.json()),
                 fetch("/api/v1/portforward").then(res => res.json()),
-                fetch("/api/v1/limits").then(res => res.json())
+                fetch("/api/v1/limits").then(res => res.json()),
+                fetch("/api/v1/floating-ips").then(res => res.json())
             ]);
 
             if (portsRes && portsRes.ports) {
@@ -114,6 +128,10 @@ export default function NetworkViewPage() {
 
             if (limitsRes) {
                 setLimits(limitsRes);
+            }
+
+            if (floatingIpsRes) {
+                setFloatingIpStatus(floatingIpsRes || []);
             }
 
         } catch (error) {
@@ -357,17 +375,35 @@ export default function NetworkViewPage() {
 
                                     {/* 조건부 렌더링 */}
                                     {externalPortMode === "auto" ? (
-                                        <p className="text-sm text-muted-foreground">
-                                            시스템에서 사용 가능한 포트를 자동으로 할당합니다.
-                                        </p>
+                                        <div className="space-y-2">
+                                            <p className="text-sm text-muted-foreground">
+                                                시스템에서 사용 가능한 포트를 자동으로 할당합니다.
+                                            </p>
+                                            {floatingIpStatus.length > 0 && (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {floatingIpStatus.map(status => (
+                                                        <Badge key={status.ip} variant="secondary" className="text-[10px]">
+                                                            {status.ip}: {status.total_rules}/{status.max_rules} 규칙 사용 중
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
                                     ) : (
-                                        <Input
-                                            id="external-port"
-                                            type="number"
-                                            value={externalPort}
-                                            onChange={(e) => setExternalPort(e.target.value)}
-                                            placeholder="e.g., 8080"
-                                        />
+                                        <div className="space-y-2">
+                                            <Input
+                                                id="external-port"
+                                                type="number"
+                                                value={externalPort}
+                                                onChange={(e) => setExternalPort(e.target.value)}
+                                                placeholder="e.g., 8080"
+                                            />
+                                            {floatingIpStatus.length > 0 && (
+                                                <p className="text-[11px] text-muted-foreground">
+                                                    허용 범위: {floatingIpStatus[0].port_range[0]} - {floatingIpStatus[0].port_range[1]}
+                                                </p>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             </div>

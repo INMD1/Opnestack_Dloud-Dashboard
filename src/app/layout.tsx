@@ -22,6 +22,7 @@ export default function RootLayout({
         <title>DCloud-동의대학교 응용소프트웨어공학과 클라우드</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="description" content="OpenStack 기반 클라우드 인프라 관리 대시보드" />
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
       </head>
       <body className="font-sans">
         <ThemeProvider

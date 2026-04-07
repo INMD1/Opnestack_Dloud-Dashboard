@@ -3,6 +3,10 @@ import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { getSkylineClient } from "@/lib/skyline";
 
+/**
+ * IP별 상세 현황 API
+ * GET /api/v1/floating-ips
+ */
 export async function GET() {
     try {
         const session = await getServerSession(authOptions);
@@ -13,7 +17,7 @@ export async function GET() {
         const skylineClient = getSkylineClient(session.keystone_token);
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const { data, error } = await skylineClient.GET("/api/v1/port_forwardings/stats");
+        const { data, error } = await skylineClient.GET("/api/v1/floating-ips");
 
         if (error) {
             return new NextResponse(JSON.stringify(error), { status: 500 });
@@ -21,7 +25,7 @@ export async function GET() {
 
         return new NextResponse(JSON.stringify(data), { status: 200 });
     } catch (err) {
-        console.error("Port Forwarding Stats API error:", err);
-        return new NextResponse(JSON.stringify({ message: "Port Forwarding Stats API failed" }), { status: 500 });
+        console.error("Floating IPs API error:", err);
+        return new NextResponse(JSON.stringify({ message: "Floating IPs API failed" }), { status: 500 });
     }
 }

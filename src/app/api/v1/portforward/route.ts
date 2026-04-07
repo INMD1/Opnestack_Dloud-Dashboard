@@ -12,8 +12,17 @@ export async function GET(req: NextRequest) {
             return new NextResponse(JSON.stringify({ message: "Unauthorized" }), { status: 401 });
         }
 
+        const { searchParams } = new URL(req.url);
+        const params: any = {};
+        if (searchParams.get("status_filter")) params.status_filter = searchParams.get("status_filter");
+        if (searchParams.get("floating_ip")) params.floating_ip = searchParams.get("floating_ip");
+        if (searchParams.get("service_type")) params.service_type = searchParams.get("service_type");
+        if (searchParams.get("vm_id")) params.vm_id = searchParams.get("vm_id");
+
         const skylineClient = getSkylineClient(session.keystone_token);
-        const { data, error } = await (skylineClient as any).GET("/api/v1/portforward");
+        const { data, error } = await (skylineClient as any).GET("/api/v1/portforward", {
+            params: { query: params }
+        });
 
         if (error) {
             logger.devError("Backend portforward error:", error);

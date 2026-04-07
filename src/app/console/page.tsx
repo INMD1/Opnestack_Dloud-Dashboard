@@ -2,29 +2,16 @@
 // @ts-nocheck
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-
-//Icons
-import { VscVm } from "react-icons/vsc";
-import { PiNetwork } from "react-icons/pi";
-import { GrStorage } from "react-icons/gr";
-import { IoRefresh } from "react-icons/io5";
-import { HiComputerDesktop } from "react-icons/hi2";
-import { FaRegClock } from "react-icons/fa";
-import { Button } from "@/components/ui/button";
-import React from "react";
-import StatCard from "../exten/StatCard";
 import { components } from "@/lib/skyline-api";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
 
 const welcomeMessages = [
   "환영합니다! 새로운 시작을 함께해요 🚀",
   "어서 오세요! 기다리고 있었어요 👋",
   "환영해요! 즐거운 시간 보내세요 🎉",
 ];
-
 
 const prettyKey = (key: keyof components["schemas"]["QuotaSet"]) => {
   const map: Record<keyof components["schemas"]["QuotaSet"], string> = {
@@ -52,81 +39,24 @@ interface Quota {
   reserved: number;
 }
 
-function toDonutData(q: Quota) {
-  const inUse = Math.max(0, q.in_use);
-  const reserved = Math.max(0, q.reserved);
-  const limit = Math.max(0, q.limit);
-  const available = Math.max(0, limit - inUse - reserved);
-  const total = Math.max(1, inUse + reserved + available); // avoid 0 total
-  return {
-    chart: [
-      { name: "In use", value: inUse },
-      { name: "Reserved", value: reserved },
-      { name: "Available", value: available },
-    ],
-    pct: (inUse / total) * 100,
-    inUse,
-    reserved,
-    available,
-    limit,
-  };
-}
-
-// 더 생동감 있는 차트 색상 (oklch 기반)
-const COLORS = [
-  "#ff2c2c",
-  "",
-  "#009DD1"
-];
-
-const DonutCard: React.FC<{ title: string; quota: Quota }> = ({ title, quota }) => {
-  const { chart, pct, limit } = toDonutData(quota);
-  return (
-    <div className="grid items-center gap-4">
-      <div className="flex items-center">
-        <div className="w-32 h-30 mr-5">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={chart}
-                dataKey="value"
-                nameKey="name"
-                innerRadius={38}
-                outerRadius={56}
-                startAngle={90}
-                endAngle={-270}
-                isAnimationActive
-
-              >
-                {chart.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-        <div>
-          <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>
-          <div className="text-3xl font-bold gradient-text leading-tight">{pct.toFixed(0)}%</div>
-          <div className="text-xs text-muted-foreground mt-1">사용 중: {limit}개 중</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
 export default function ConsolePage() {
-
   const { data: session } = useSession();
   const [message, setMessage] = useState("");
   const [limits, setLimits] = useState<components["schemas"]["QuotaSet"] | null>(null);
-  const [portlimit, setPortlimit] = useState("");
   const [projectlogs, setProjectlogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const entries = Object.entries(limits ?? {}).filter(([key]) => !["subnet", "security_group", "floatingip", "port", "router", "security_group_rule"].includes(key)) as [keyof components["schemas"]["QuotaSet"], Quota][];
+  const entries = Object.entries(limits ?? {}).filter(
+    ([key]) => !["subnet", "security_group", "floatingip", "port", "router", "security_group_rule", "snapshots", "network"].includes(key)
+  ) as [keyof components["schemas"]["QuotaSet"], Quota][];
 
+  // 전체 평균 사용률
+  const overallPct = entries.length
+    ? entries.reduce((acc, [, q]) => {
+      const pct = q.limit > 0 ? Math.min(100, (q.in_use / q.limit) * 100) : 0;
+      return acc + pct;
+    }, 0) / entries.length
+    : 0;
 
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * welcomeMessages.length);
@@ -134,55 +64,28 @@ export default function ConsolePage() {
 
     async function fetchData() {
       setIsLoading(true);
-
       try {
-        // Fetch project logs with error handling
         try {
           const resss = await fetch("/api/v1/projectlogs");
           const dataaa = await resss.json();
-          // Safely access project_logs array
           setProjectlogs(Array.isArray(dataaa?.project_logs) ? dataaa.project_logs : []);
         } catch (error) {
           console.error("Error fetching project logs:", error);
           setProjectlogs([]);
         }
 
-        // Fetch port forward data with error handling
-        let portForwardCount = 0;
-        try {
-          const ress = await fetch("/api/v1/portforward");
-          const dataa = await ress.json();
-          // dataa is an array of port forwarding rules from the external server
-          portForwardCount = Array.isArray(dataa) ? dataa.length : 0;
-        } catch (error) {
-          console.error("Error fetching port forwards:", error);
-          portForwardCount = 0;
-        }
-
-        // Fetch limits with error handling
         try {
           const res = await fetch("/api/v1/limits");
-          if (!res.ok) {
-            console.error("Limits API error:", res.status);
-          } else {
+          if (res.ok) {
             const data = await res.json();
             if (data?.quotas) {
-              if (data.quotas.port_forwardings) {
-                setPortlimit({ total_count: portForwardCount, limit: data.quotas.port_forwardings.limit });
-                data.quotas.port_forwardings.in_use = portForwardCount;
-              }
               setLimits(data.quotas);
-            } else {
-              console.error("Invalid limits data structure");
             }
           }
         } catch (error) {
           console.error("Error fetching limits:", error);
         }
-
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Error in fetchData:", error);
+      } finally {
         setIsLoading(false);
       }
     }
@@ -190,133 +93,211 @@ export default function ConsolePage() {
   }, []);
 
   return (
-    <div className="mx-auto px-14 py-8 space-y-10">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-4xl font-bold">
-            <span className="gradient-text">안녕하세요, {session?.user?.name || "사용자"}님!</span> 👋
-          </h1>
-          <p className="text-lg text-muted-foreground mt-2">{message}</p>
+    <main className="min-h-screen p-6 md:p-10 bg-[#10131a] text-[#e1e2eb]">
+      <div className="max-w-7xl mx-auto space-y-10">
+        {/* Header & Contextual Actions */}
+        <div className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-[#424655]/20 pb-8">
+          <div>
+            <span className="text-[10px] font-bold text-[#b0c6ff] tracking-[0.3em] uppercase opacity-80">Architecture Overview</span>
+            <h2 className="text-4xl font-bold text-[#e1e2eb] tracking-tight mt-2">Infrastructure Hub</h2>
+            <p className="text-sm text-[#c2c6d7] mt-2 font-medium opacity-70">
+              <span className="text-[#b0c6ff]">{session?.user?.name}</span>님, {message}
+            </p>
+          </div>
+          <div className="flex gap-4">
+            <Link href="/console/network/view">
+              <button className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-[#c2c6d7] bg-[#1d2026] hover:bg-[#272a31] transition-all rounded-lg border border-[#424655]/30 shadow-sm active:scale-95">
+                <span className="material-symbols-outlined text-[20px]">lan</span>
+                네트워크 관리
+              </button>
+            </Link>
+            <Link href="/console/instance/create">
+              <button className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-[#001945] bg-gradient-to-r from-[#b0c6ff] to-[#558dff] rounded-lg shadow-[0_4px_20px_rgba(85,141,255,0.3)] hover:shadow-[0_4px_25px_rgba(85,141,255,0.4)] active:scale-95 transition-all">
+                <span className="material-symbols-outlined text-[20px]">add</span>
+                인스턴스 생성
+              </button>
+            </Link>
+          </div>
         </div>
-        <div className="flex items-center gap-x-3">
-          <a href="/console/instance/create">
-            <Button className="gradient-primary text-white flex items-center gap-2 hover-lift">
-              <HiComputerDesktop />
-              VM 생성
-            </Button>
-          </a>
-          <a href="/console/disk/view">
-            <Button variant="outline" className="flex items-center gap-2 hover-lift">
-              <GrStorage />
-              디스크 생성
-            </Button>
-          </a>
-          <a href="/console/network/view">
-            <Button variant="outline" className="flex items-center gap-2 hover-lift">
-              <PiNetwork />
-              네트워크 관리
-            </Button>
-          </a>
-          <Button variant="outline" className="flex items-center gap-2 hover-lift">
-            <IoRefresh />
-            새로고침
-          </Button>
-        </div>
-      </div>
-      <section>
-        <h2 className="text-2xl font-bold mb-4">사용량 요약</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <StatCard
-            icon={<VscVm className="text-4xl text-blue-500" />}
-            title="인스턴스"
-            isLoading={isLoading}          >
-            {limits ? (
-              <p className="text-3xl font-bold text-gray-800 mt-1">
-                {limits.instances.in_use} / {limits.instances.limit}
-                <span className="text-xl font-medium text-gray-600"> 개</span>
-              </p>
-            ) : (
-              <p className="text-xl text-gray-500 mt-1">데이터 없음</p>
-            )}
-          </StatCard>
 
-          <StatCard
-            icon={<PiNetwork className="text-4xl text-green-500" />}
-            title="포트포워딩 개수"
-            isLoading={isLoading}
-          >
-            {portlimit ? (
-              <p className="text-3xl font-bold text-gray-800 mt-1">
-                {portlimit.total_count} / {portlimit.limit}
-                <span className="text-xl font-medium text-gray-600"> 개</span>
-              </p>
-            ) : (
-              <p className="text-xl text-gray-500 mt-1">데이터 없음</p>
-            )}
-          </StatCard>
-
-          <StatCard
-            icon={<GrStorage className="text-4xl text-purple-500" />}
-            title="Disk 사용량"
-            isLoading={isLoading}
-          >
-            {limits ? (
-              <div className="flex flex-col">
-                <p className="text-xl font-semibold text-gray-700">{limits.volumes.in_use}개 ({limits.gigabytes.in_use} GB)</p>
+        {/* Dashboard Bento Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+          {/* Infrastructure Overview Cards (Asymmetric Column) */}
+          <div className="md:col-span-8 space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Instances Card */}
+              <div className="bg-[#191c22] p-7 rounded-2xl border border-[#424655]/10 relative overflow-hidden group hover:border-[#b0c6ff]/30 transition-colors">
+                <div className="flex justify-between items-start mb-5">
+                  <span className="material-symbols-outlined text-[#b0c6ff] text-4xl">memory</span>
+                  <span className="text-[10px] font-bold text-[#c2c6d7]/40 uppercase tracking-widest">{isLoading ? "Loading..." : "Live"}</span>
+                </div>
+                <h3 className="text-xs font-bold text-[#c2c6d7]/60 uppercase tracking-widest mb-2">Instances</h3>
+                <div className="flex items-baseline gap-2 mb-5">
+                  <span className="text-4xl font-bold tracking-tighter">{limits?.instances?.in_use ?? 0}</span>
+                  <span className="text-sm font-medium text-[#b0c6ff]/60">/ {limits?.instances?.limit ?? 0}</span>
+                </div>
+                <div className="w-full h-2 bg-[#32353c] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#b0c6ff] transition-all duration-700 ease-out shadow-[0_0_10px_rgba(176,198,255,0.5)]"
+                    style={{ width: `${limits?.instances?.limit ? Math.min(100, (limits.instances.in_use / limits.instances.limit) * 100) : 0}%` }}
+                  ></div>
+                </div>
+                <p className="text-[10px] text-[#c2c6d7]/50 mt-4 font-bold uppercase">
+                  {limits?.instances?.limit ? Math.round((limits.instances.in_use / limits.instances.limit) * 100) : 0}% capacity utilized
+                </p>
               </div>
-            ) : (
-              <p className="text-xl text-gray-500 mt-1">데이터 없음</p>
-            )}
-          </StatCard>
 
-        </div>
-      </section>
-      <section>
-        {/* 최근 활동 - 타임라인 스타일 */}
-        <div className="w-full">
-          <Card className="h-full hover-lift">
-            <CardHeader>
-              <CardTitle className="gradient-text-cyan">최근 활동</CardTitle>
-              <CardDescription>계정의 최근 활동 내역입니다.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4 relative overflow-auto h-[20vh]">
-                {/* 타임라인 세로선 */}
-                <div className="absolute left-[18px] top-0 bottom-0 w-[2px] bg-gradient-to-b from-primary via-accent to-transparent" />
-                {Array.isArray(projectlogs) && projectlogs.length > 0 ? (
-                  projectlogs.map((activity, index) => (
-                    <div key={index} className="flex items-start gap-4 relative transition-all duration-300 hover:translate-x-2">
-                      <div className="gradient-primary rounded-full p-2 z-10 ring-4 ring-background">
-                        <FaRegClock className="h-4 w-4 text-white" />
+              {/* Networking Card (Floating IPs) */}
+              <div className="bg-[#191c22] p-7 rounded-2xl border border-[#424655]/10 relative group hover:border-[#ffb692]/30 transition-colors">
+                <div className="flex justify-between items-start mb-5">
+                  <span className="material-symbols-outlined text-[#ffb692] text-4xl">lan</span>
+                  <span className="text-[10px] font-bold text-[#c2c6d7]/40 uppercase tracking-widest">Active</span>
+                </div>
+                <h3 className="text-xs font-bold text-[#c2c6d7]/60 uppercase tracking-widest mb-2">PortForwarding</h3>
+                <div className="flex items-baseline gap-2 mb-5">
+                  <span className="text-4xl font-bold tracking-tighter">{limits?.port_forwardings?.in_use ?? 0}</span>
+                  <span className="text-sm font-medium text-[#ffb692]/60">/ {limits?.port_forwardings?.limit ?? 0}</span>
+                </div>
+                <div className="w-full h-2 bg-[#32353c] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#ffb692] transition-all duration-700 ease-out shadow-[0_0_10px_rgba(255,182,146,0.5)]"
+                    style={{ width: `${limits?.port_forwardings?.limit ? Math.min(100, (limits.port_forwardings.in_use / limits.port_forwardings.limit) * 100) : 0}%` }}
+                  ></div>
+                </div>
+                <p className="text-[10px] text-[#c2c6d7]/50 mt-4 font-bold uppercase">External networking status</p>
+              </div>
+
+              {/* Storage Card */}
+              <div className="bg-[#191c22] p-7 rounded-2xl border border-[#424655]/10 relative group hover:border-[#9cb4f2]/30 transition-colors">
+                <div className="flex justify-between items-start mb-5">
+                  <span className="material-symbols-outlined text-[#9cb4f2] text-4xl">database</span>
+                  <span className="text-[10px] font-bold text-[#c2c6d7]/40 uppercase tracking-widest">Optimized</span>
+                </div>
+                <h3 className="text-xs font-bold text-[#c2c6d7]/60 uppercase tracking-widest mb-2">Storage Usage</h3>
+                <div className="flex items-baseline gap-2 mb-5">
+                  <span className="text-4xl font-bold tracking-tighter">{limits?.gigabytes?.in_use ?? 0}</span>
+                  <span className="text-sm font-medium text-[#9cb4f2]/60">GB / {limits?.gigabytes?.limit ?? 0}</span>
+                </div>
+                <div className="w-full h-2 bg-[#32353c] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#9cb4f2] transition-all duration-700 ease-out shadow-[0_0_10px_rgba(156,180,242,0.5)]"
+                    style={{ width: `${limits?.gigabytes?.limit ? Math.min(100, (limits.gigabytes.in_use / limits.gigabytes.limit) * 100) : 0}%` }}
+                  ></div>
+                </div>
+                <p className="text-[10px] text-[#c2c6d7]/50 mt-4 font-bold uppercase">
+                  {limits?.gigabytes?.limit ? Math.round((limits.gigabytes.in_use / limits.gigabytes.limit) * 100) : 0}% of provisioned tier
+                </p>
+              </div>
+            </div>
+
+            {/* Central Activity Feed */}
+            <div className="bg-[#1d2026] p-8 rounded-2xl border border-[#424655]/10">
+              <div className="flex justify-between items-center mb-8">
+                <h3 className="text-xl font-bold flex items-center gap-3">
+                  <span className="material-symbols-outlined text-[#b0c6ff] text-2xl">history</span>
+                  활동 로그
+                </h3>
+              </div>
+              <div className="space-y-4 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
+                {projectlogs.length > 0 ? (
+                  projectlogs.map((log, index) => (
+                    <div key={index} className="flex items-center gap-5 p-4 rounded-xl hover:bg-[#272a31]/50 border border-transparent hover:border-[#424655]/20 transition-all">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${log.message.includes("fail") || log.message.includes("error")
+                          ? "bg-[#93000a]/20"
+                          : "bg-[#b0c6ff]/10"
+                        }`}>
+                        <span className={`material-symbols-outlined text-[20px] ${log.message.includes("fail") || log.message.includes("error") ? "text-[#ffb4ab]" : "text-[#b0c6ff]"
+                          }`}>
+                          {log.message.includes("fail") || log.message.includes("error") ? "error" : "check_circle"}
+                        </span>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{activity.message}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{activity.created_at}</p>
+                      <div className="flex-grow">
+                        <p className="text-sm font-semibold tracking-tight">{log.message}</p>
+                        <p className="text-[10px] text-[#c2c6d7]/50 font-bold uppercase mt-1">{log.created_at} • system</p>
                       </div>
+                      <span className={`text-[9px] font-black tracking-widest px-3 py-1 rounded-full ${log.message.includes("fail") || log.message.includes("error")
+                          ? "bg-[#93000a] text-[#ffdad6]"
+                          : "bg-[#2b457c] text-[#b0c6ff]"
+                        }`}>
+                        {log.message.includes("fail") || log.message.includes("error") ? "ERROR" : "SUCCESS"}
+                      </span>
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground pl-12">최근 활동이 없습니다.</p>
+                  <div className="flex flex-col items-center justify-center py-20 opacity-30">
+                    <span className="material-symbols-outlined text-5xl mb-3">cloud_off</span>
+                    <p className="text-sm font-medium italic tracking-wide">활동 기록이 없습니다.</p>
+                  </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-      <section>
-        <h2 className="text-2xl font-bold mb-4">계정 한도 및 최근 활동</h2>
-        <div className="">
-          {isLoading ? (
-            <p>계정 한도 정보를 불러오는 중입니다...</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {entries.map(([key, quota]) => (
-                <DonutCard key={key} title={prettyKey(key)} quota={quota} />
-              ))}
             </div>
-          )}
+          </div>
+
+          {/* Resource Quota Column */}
+          <div className="md:col-span-4 space-y-8">
+            <div className="bg-[#272a31]/40 p-8 rounded-2xl border border-[#424655]/20 flex flex-col h-full backdrop-blur-sm">
+              <h3 className="text-xs font-bold text-[#c2c6d7]/60 uppercase tracking-[0.2em] mb-10">할당량 대시보드</h3>
+              <div className="flex-grow flex flex-col items-center justify-center relative">
+                {/* CSS Conic-Gradient Doughnut Chart */}
+                <div
+                  className="w-56 h-56 rounded-full flex items-center justify-center relative shadow-[0_0_50px_rgba(0,0,0,0.3)]"
+                  style={{
+                    background: `conic-gradient(#b0c6ff ${overallPct}%, #1d2026 0)`
+                  }}
+                >
+                  {/* Inner Hole */}
+                  <div className="absolute inset-4 rounded-full bg-[#272a31] flex items-center justify-center shadow-inner">
+                    <div className="text-center">
+                      <p className="text-4xl font-black tracking-tighter text-[#e1e2eb]">{Math.round(overallPct)}%</p>
+                      <p className="text-[9px] uppercase font-bold text-[#c2c6d7]/40 tracking-widest mt-1">전체 사용량</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-12 w-full space-y-5">
+                  {entries.slice(0, 5).map(([key, quota]) => {
+                    const pct = quota.limit > 0 ? Math.min(100, (quota.in_use / quota.limit) * 100) : 0;
+                    return (
+                      <div key={key} className="space-y-2">
+                        <div className="flex justify-between items-center text-xs font-bold">
+                          <div className="flex items-center gap-2.5">
+                            <div className={`w-2 h-2 rounded-full ${pct > 85 ? 'bg-[#ffb692]' : 'bg-[#b0c6ff]'} shadow-[0_0_8px_currentColor]`}></div>
+                            <span className="text-[#c2c6d7] uppercase tracking-wider">{prettyKey(key)}</span>
+                          </div>
+                          <span className="text-[#e1e2eb] tabular-nums">{quota.in_use} / {quota.limit}</span>
+                        </div>
+                        <div className="w-full h-1 bg-[#1d2026] rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all duration-1000 ${pct > 85 ? 'bg-[#ffb692]' : 'bg-[#b0c6ff]'}`}
+                            style={{ width: `${pct}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+            </div>
+          </div>
         </div>
-      </section>
-    </div>
+      </div>
+
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.02);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #32353c;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #424655;
+        }
+      `}</style>
+    </main>
   );
 }
