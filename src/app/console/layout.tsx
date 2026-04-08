@@ -9,6 +9,7 @@ import ProfileChecker from "../exten/ProfileChecker";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, LogOut, Cpu } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -67,8 +68,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
     if (status === "loading") {
         return (
-            <div className="flex items-center justify-center w-screen h-screen bg-[#10131a]">
-                <Loader2 className="h-10 w-10 animate-spin text-[#b0c6ff]" />
+            <div className="flex items-center justify-center w-screen h-screen bg-background">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
             </div>
         );
     }
@@ -77,13 +78,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <SidebarProvider>
             <ProfileChecker />
             <AppSidebar />
-            <div className="relative flex flex-col flex-1 w-full min-h-screen bg-[#10131a] overflow-hidden">
+            <div className="relative flex flex-col flex-1 w-full min-h-screen bg-background overflow-hidden transition-colors duration-300">
                 {/* Global Top Header */}
-                <header className="sticky top-0 z-40 w-full h-16 bg-[#10131a]/80 backdrop-blur-xl border-b border-[#424655]/10 px-6 flex items-center justify-between">
+                <header className="sticky top-0 z-40 w-full h-16 bg-background/80 backdrop-blur-xl border-b border-border px-4 sm:px-6 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        {/* Mobile sidebar toggle can go here if needed */}
-                        <div className="hidden md:flex items-center gap-2 text-[#c2c6d7]/40 text-[10px] font-bold uppercase tracking-widest">
-                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        <div className="hidden sm:flex items-center gap-2 text-muted-foreground/40 text-[10px] font-black uppercase tracking-[0.2em]">
+                            <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)] animate-pulse"></span>
                             System Operational
                         </div>
                     </div>
@@ -91,35 +91,35 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     <div className="flex items-center gap-4">
                         {buildingInstances.length > 0 && (
                             <div
-                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#b0c6ff]/10 border border-[#b0c6ff]/20 text-[#b0c6ff] text-xs font-bold cursor-pointer hover:bg-[#b0c6ff]/20 transition-all shadow-[0_0_15px_rgba(176,198,255,0.1)]"
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-primary text-[10px] font-black cursor-pointer hover:bg-primary/20 transition-all shadow-sm"
                                 onClick={() => router.push(`/console/instance/${encodeURIComponent(buildingInstances[0])}/status`)}
                                 title={`생성 중: ${buildingInstances.join(', ')}`}
                             >
                                 <Cpu className="h-3.5 w-3.5 animate-pulse" />
-                                <span>BUILDING ({buildingInstances.length})</span>
+                                <span className="tracking-tighter uppercase">BUILDING ({buildingInstances.length})</span>
                             </div>
                         )}
                         
                         {session ? (
                             <div className="flex items-center gap-3">
-                                <div className="hidden sm:flex flex-col items-end mr-2">
-                                    <span className="text-xs font-bold text-[#e1e2eb]">{session.user?.name}</span>
-                                    <span className="text-[9px] text-[#c2c6d7]/50 font-black uppercase tracking-tighter">Verified User</span>
+                                <div className="hidden sm:flex flex-col items-end mr-1">
+                                    <span className="text-xs font-bold text-foreground">{session.user?.name}</span>
+                                    <span className="text-[9px] text-muted-foreground/50 font-black uppercase tracking-tighter">Verified Identity</span>
                                 </div>
                                 <Button
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleLogout()}
-                                    className="text-[#c2c6d7] hover:text-[#ffb4ab] hover:bg-[#93000a]/10 transition-all gap-2 px-3 border border-[#424655]/20"
+                                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all gap-2 px-3 border border-border rounded-xl"
                                 >
                                     <LogOut className="h-4 w-4" />
-                                    <span className="hidden sm:inline">Logout</span>
+                                    <span className="hidden sm:inline font-bold uppercase tracking-widest text-[10px]">Logout</span>
                                 </Button>
                             </div>
                         ) : (
                             <Link href="/auth/login">
-                                <Button size="sm" className="bg-gradient-to-r from-[#b0c6ff] to-[#558dff] text-[#001945] font-bold">
-                                    Login
+                                <Button size="sm" className="bg-primary text-primary-foreground font-black uppercase tracking-widest text-[10px] rounded-xl shadow-lg">
+                                    Login Access
                                 </Button>
                             </Link>
                         )}
