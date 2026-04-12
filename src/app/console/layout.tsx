@@ -5,7 +5,7 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import ProfileChecker from "../exten/ProfileChecker";
+import AuthGuard from "../exten/AuthGuard";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, LogOut, Cpu } from "lucide-react";
@@ -76,7 +76,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
     return (
         <SidebarProvider>
-            <ProfileChecker />
+            <AuthGuard />
             <AppSidebar />
             <div className="relative flex flex-col flex-1 w-full min-h-screen bg-background overflow-hidden transition-colors duration-300">
                 {/* Global Top Header */}

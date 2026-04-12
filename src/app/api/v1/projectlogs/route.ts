@@ -14,10 +14,13 @@ export async function GET() {
         }
 
         const skylineClient = getSkylineClient(session.keystone_token);
-        const { data, error } = await skylineClient.GET(`/api/v1/projectlogs`, {});
+        const { data, error, response } = await skylineClient.GET(`/api/v1/projectlogs`, {});
 
         if (error) {
             logger.devError("Backend projectlogs error:", error);
+            if (response?.status === 401) {
+                return new NextResponse(JSON.stringify({ message: "Unauthorized" }), { status: 401 });
+            }
             // Return empty array instead of error to prevent frontend crashes
             return new NextResponse(JSON.stringify({ project_logs: [] }), { status: 200 });
         }

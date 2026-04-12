@@ -23,6 +23,9 @@ export async function GET() {
 
         if (!response.ok) {
             logger.devError(`Profile API returned status ${response.status}`);
+            if (response.status === 401) {
+                return new NextResponse(JSON.stringify({ message: "Unauthorized" }), { status: 401 });
+            }
             // Return empty profile to prevent frontend crashes
             return new NextResponse(JSON.stringify({}), { status: 200 });
         }

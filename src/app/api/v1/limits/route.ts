@@ -12,10 +12,13 @@ export async function GET() {
         }
 
         const skylineClient = getSkylineClient(session.keystone_token);
-        const { data, error } = await skylineClient.GET("/api/v1/limits");
+        const { data, error, response } = await skylineClient.GET("/api/v1/limits");
 
         if (error) {
             logger.devError("Backend limits error:", error);
+            if (response?.status === 401) {
+                return new NextResponse(JSON.stringify({ message: "Unauthorized" }), { status: 401 });
+            }
             return new NextResponse(JSON.stringify({ message: "Failed to fetch limits" }), { status: 502 });
         }
 
