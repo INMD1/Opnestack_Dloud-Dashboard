@@ -5,6 +5,9 @@ import { db } from '@/db';
 import { admins, announcements } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 
+const MAX_TITLE_LENGTH = 200;
+const MAX_CONTENT_LENGTH = 100_000;
+
 // 관리자 여부 확인 헬퍼 함수
 async function isAdmin(userId: string): Promise<boolean> {
     const admin = await db
@@ -99,10 +102,32 @@ export async function PUT(
             );
         }
 
+        if (typeof title !== 'string' || typeof content !== 'string') {
+            return NextResponse.json({ error: '입력값이 올바르지 않습니다.' }, { status: 400 });
+        }
+        if (title.trim().length === 0) {
+            return NextResponse.json({ error: '제목을 입력해주세요.' }, { status: 400 });
+        }
+        if (title.length > MAX_TITLE_LENGTH) {
+            return NextResponse.json(
+                { error: `제목은 ${MAX_TITLE_LENGTH}자 이내로 입력해주세요.` },
+                { status: 400 }
+            );
+        }
+        if (content.trim().length === 0) {
+            return NextResponse.json({ error: '내용을 입력해주세요.' }, { status: 400 });
+        }
+        if (content.length > MAX_CONTENT_LENGTH) {
+            return NextResponse.json(
+                { error: `내용은 ${MAX_CONTENT_LENGTH.toLocaleString()}자 이내로 입력해주세요.` },
+                { status: 400 }
+            );
+        }
+
         const updated = await db
             .update(announcements)
             .set({
-                title,
+                title: title.trim(),
                 content,
                 updated_at: new Date()
             })

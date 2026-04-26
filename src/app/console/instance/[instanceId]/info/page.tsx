@@ -29,12 +29,10 @@ interface PortForwarding {
     protocol: string;
     status: string;
 }
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { LifecycleStatus } from "@/types/lifecycle";
+import { LifecycleBadge } from "@/components/instance/lifecycle-badge";
+import { ExtendButton } from "@/components/instance/extend-button";
 
 interface Instance {
     created: string;
@@ -55,9 +53,11 @@ export default function InstanceInfoPage() {
     const instanceId = params.instanceId as string;
     const [instance, setInstance] = useState<Instance | null>(null);
     const [portForwardings, setPortForwardings] = useState<PortForwarding[]>([]);
+    const [lifecycle, setLifecycle] = useState<LifecycleStatus | null>(null);
     const [internalIp, setInternalIp] = useState<string>("");
     const [novnc, setNovnc] = useState<string>("");
     const [loading, setLoading] = useState(true);
+    const [lifecycleLoading, setLifecycleLoading] = useState(true);
 
     // 포트포워딩 추가 폼 상태
     const [internalPort, setInternalPort] = useState("");
@@ -72,6 +72,21 @@ export default function InstanceInfoPage() {
             setTimeout(() => setCopiedIp(null), 2000);
         });
     };
+
+    const fetchLifecycle = useCallback(async () => {
+        try {
+            setLifecycleLoading(true);
+            const res = await fetch(`/api/v1/instances/${instanceId}/lifecycle`);
+            if (res.ok) {
+                const data = await res.json();
+                setLifecycle(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch lifecycle:", error);
+        } finally {
+            setLifecycleLoading(false);
+        }
+    }, [instanceId]);
 
     const fetchInstanceData = useCallback(async () => {
         try {
@@ -139,7 +154,8 @@ export default function InstanceInfoPage() {
         fetchInstanceData();
         fetchPortForwardings();
         fetchNovnc();
-    }, [fetchInstanceData, fetchPortForwardings, fetchNovnc]);
+        fetchLifecycle();
+    }, [fetchInstanceData, fetchPortForwardings, fetchNovnc, fetchLifecycle]);
 
     // 인스턴스 시작
     const startInstance = async (instanceId: string) => {
@@ -221,6 +237,18 @@ export default function InstanceInfoPage() {
                 type: "error",
             });
             return;
+        }
+
+        if (externalPort) {
+            const portNum = parseInt(externalPort);
+            if (isNaN(portNum) || portNum < 1 || portNum > 1000) {
+                toaster.create({
+                    title: "오류",
+                    description: "외부 포트는 1에서 1000 사이의 숫자여야 합니다.",
+                    type: "error",
+                });
+                return;
+            }
         }
 
         if (!internalIp) {
@@ -373,9 +401,12 @@ export default function InstanceInfoPage() {
                         ID: {instanceId}
                     </p>
                     {instance && (
-                        <p className="text-muted-foreground">
-                            이름: {instance.name}
-                        </p>
+                        <div className="flex items-center gap-2">
+                            <p className="text-muted-foreground">
+                                이름: {instance.name}
+                            </p>
+                            {lifecycle && <LifecycleBadge lifecycle={lifecycle} />}
+                        </div>
                     )}
                 </div>
             </header>
@@ -477,12 +508,11 @@ export default function InstanceInfoPage() {
                                                         <Input
                                                             id="external-port"
                                                             type="number"
-                                                            placeholder="자동 할당"
+                                                            placeholder="1~1000 (비워두면 자동 할당)"
                                                             value={externalPort}
                                                             onChange={(e) => setExternalPort(e.target.value)}
                                                         />
-                                                    </div>
-                                                </div>
+                                                    </div>                                                </div>
                                                 <div>
                                                     <Label htmlFor="protocol">프로토콜</Label>
                                                     <select
@@ -533,53 +563,21 @@ export default function InstanceInfoPage() {
                                 <p className="text-lg"><strong>생성일: </strong>{instance.created}</p>
                                 <p className="text-lg"><strong>OS: </strong>{instance.os_name || "Unknown"}</p>
 
-                                {/* 로그인 정보 섹션 */}
-                                {(instance.default_user || instance.default_password) && (
-                                    <div className="mt-4 p-4 rounded-lg border border-green-500/30 bg-green-950/10 dark:bg-green-950/20">
-                                        <h3 className="text-sm font-semibold text-green-600 dark:text-green-400 mb-3 flex items-center gap-2">
-                                            🔑 초기 SSH 접속 정보
-                                        </h3>
-                                        <div className="space-y-2">
-                                            {instance.default_user && (
-                                                <div className="flex items-center justify-between bg-black/10 dark:bg-black/30 rounded px-3 py-2">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs text-muted-foreground">사용자</span>
-                                                        <span className="font-mono text-sm font-semibold">{instance.default_user}</span>
-                                                    </div>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-7 px-2 text-xs"
-                                                        onClick={() => handleCopyIp(instance.default_user!)}
-                                                    >
-                                                        {copiedIp === instance.default_user
-                                                            ? <Check className="h-3 w-3 text-green-500" />
-                                                            : <Copy className="h-3 w-3" />}
-                                                    </Button>
-                                                </div>
-                                            )}
-                                            {instance.default_password && (
-                                                <div className="flex items-center justify-between bg-black/10 dark:bg-black/30 rounded px-3 py-2">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs text-muted-foreground">비밀번호</span>
-                                                        <span className="font-mono text-sm font-semibold tracking-wider">{instance.default_password}</span>
-                                                    </div>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-7 px-2 text-xs"
-                                                        onClick={() => handleCopyIp(instance.default_password!)}
-                                                    >
-                                                        {copiedIp === instance.default_password
-                                                            ? <Check className="h-3 w-3 text-green-500" />
-                                                            : <Copy className="h-3 w-3" />}
-                                                    </Button>
-                                                </div>
-                                            )}
+                                {lifecycle && (
+                                    <div className="mt-4 pt-4 border-t">
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <p className="text-sm font-semibold">사용 기한</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    만료일: {new Date(lifecycle.expires_at * 1000).toLocaleString()}
+                                                </p>
+                                            </div>
+                                            <ExtendButton
+                                                instanceId={instanceId}
+                                                emailStatus={lifecycle.email_status}
+                                                onSuccess={fetchLifecycle}
+                                            />
                                         </div>
-                                        <p className="text-xs text-muted-foreground mt-2">
-                                            ⚠️ 접속 후 보안을 위해 비밀번호를 변경하는 것을 권장합니다.
-                                        </p>
                                     </div>
                                 )}
                             </div>
@@ -591,8 +589,8 @@ export default function InstanceInfoPage() {
             </div>
 
             {/* NoVNC 콘솔 */}
-            <div>
-                <Card>
+            <div className="flex gap-x-4 sm:gap-x-10">
+                <Card className="sm:min-w-2xl max-w-2xl">
                     <CardHeader>
                         <CardTitle>원격 접속</CardTitle>
                         <CardDescription>브라우저에서 VM에 직접 접속할 수 있습니다.</CardDescription>
@@ -610,8 +608,59 @@ export default function InstanceInfoPage() {
                         ) : (
                             <p className="text-muted-foreground">콘솔 URL을 불러오는 중...</p>
                         )} */}
+
                     </CardContent>
                 </Card>
+                <div>
+                    {instance && (instance.default_user || instance.default_password) && (
+                        <div className=" p-4 rounded-lg border border-green-500/30 bg-green-950/10 dark:bg-green-950/20">
+                            <h3 className="text-sm font-semibold text-green-600 dark:text-green-400 mb-3 flex items-center gap-2">
+                                🔑 초기 SSH 접속 정보
+                            </h3>
+                            <div className="space-y-2">
+                                {instance.default_user && (
+                                    <div className="flex items-center justify-between bg-black/10 dark:bg-black/30 rounded px-3 py-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs text-muted-foreground">사용자</span>
+                                            <span className="font-mono text-sm font-semibold">{instance.default_user}</span>
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-7 px-2 text-xs"
+                                            onClick={() => handleCopyIp(instance.default_user!)}
+                                        >
+                                            {copiedIp === instance.default_user
+                                                ? <Check className="h-3 w-3 text-green-500" />
+                                                : <Copy className="h-3 w-3" />}
+                                        </Button>
+                                    </div>
+                                )}
+                                {instance.default_password && (
+                                    <div className="flex items-center justify-between bg-black/10 dark:bg-black/30 rounded px-3 py-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs text-muted-foreground">비밀번호</span>
+                                            <span className="font-mono text-sm font-semibold tracking-wider">{instance.default_password}</span>
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-7 px-2 text-xs"
+                                            onClick={() => handleCopyIp(instance.default_password!)}
+                                        >
+                                            {copiedIp === instance.default_password
+                                                ? <Check className="h-3 w-3 text-green-500" />
+                                                : <Copy className="h-3 w-3" />}
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-2">
+                                ⚠️ 접속 후 보안을 위해 비밀번호를 변경하는 것을 권장합니다.
+                            </p>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { verifiactionToken, Student_accept, pendingUsers } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { decryptText } from "@/lib/crypto-utils";
 
 export async function POST(req: NextRequest) {
     try {
@@ -94,6 +95,18 @@ export async function POST(req: NextRequest) {
 
         // Skyline API로 실제 회원가입 처리
         try {
+            // 암호화 저장된 비밀번호 복호화
+            let plainPassword: string;
+            try {
+                plainPassword = decryptText(userInfo.password);
+            } catch {
+                console.error("Password decryption failed for user:", userInfo.username);
+                return NextResponse.json(
+                    { error: "회원가입 정보가 손상되었습니다. 다시 회원가입을 진행해주세요." },
+                    { status: 500 }
+                );
+            }
+
             const skylineUrl = `${process.env.SKYLINE_API_URL}/api/v1/signup`;
             const signupResponse = await fetch(skylineUrl, {
                 method: "POST",
@@ -102,7 +115,7 @@ export async function POST(req: NextRequest) {
                 },
                 body: JSON.stringify({
                     username: userInfo.username,
-                    password: userInfo.password,
+                    password: plainPassword,
                     name: userInfo.name,
                     email: userInfo.email,
                     student_id: userInfo.student_id,
@@ -155,7 +168,7 @@ export async function POST(req: NextRequest) {
                                 "Content-Type": "application/json",
                                 Authorization: `Bearer ${authentikToken}`,
                             },
-                            body: JSON.stringify({ password: userInfo.password }),
+                            body: JSON.stringify({ password: plainPassword }),
                         });
                     }
                 }

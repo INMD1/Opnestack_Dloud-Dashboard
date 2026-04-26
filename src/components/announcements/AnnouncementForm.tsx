@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Send, X } from 'lucide-react';
+import { Send, X, Mail, MailX } from 'lucide-react';
 
 interface AnnouncementFormProps {
     onSuccess?: () => void;
@@ -16,6 +16,7 @@ interface AnnouncementFormProps {
 export default function AnnouncementForm({ onSuccess, onCancel, initialData }: AnnouncementFormProps) {
     const [title, setTitle] = useState(initialData?.title || '');
     const [content, setContent] = useState(initialData?.content || '');
+    const [sendEmail, setSendEmail] = useState(true);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -36,7 +37,7 @@ export default function AnnouncementForm({ onSuccess, onCancel, initialData }: A
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ title, content }),
+                body: JSON.stringify({ title, content, sendEmail: isEditing ? false : sendEmail }),
             });
 
             const data = await res.json();
@@ -92,6 +93,47 @@ export default function AnnouncementForm({ onSuccess, onCancel, initialData }: A
                              transition-colors resize-none"
                 />
             </div>
+
+            {/* 이메일 발송 옵션 (새 공지 작성 시에만 표시) */}
+            {!isEditing && (
+                <div>
+                    <label className="flex items-center gap-3 cursor-pointer w-fit group">
+                        <div className="relative">
+                            <input
+                                type="checkbox"
+                                checked={sendEmail}
+                                onChange={(e) => setSendEmail(e.target.checked)}
+                                className="sr-only"
+                            />
+                            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors
+                                ${sendEmail
+                                    ? 'bg-cyan-600 border-cyan-600'
+                                    : 'bg-transparent border-slate-600 group-hover:border-slate-400'
+                                }`}>
+                                {sendEmail && (
+                                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {sendEmail
+                                ? <Mail className="w-4 h-4 text-cyan-400" />
+                                : <MailX className="w-4 h-4 text-slate-500" />
+                            }
+                            <span className={`text-sm font-medium transition-colors ${sendEmail ? 'text-cyan-400' : 'text-slate-500'}`}>
+                                {sendEmail ? '전체 회원에게 이메일 발송' : '이메일 발송 안 함'}
+                            </span>
+                        </div>
+                    </label>
+                    {sendEmail && (
+                        <p className="mt-1.5 ml-8 text-xs text-slate-500">
+                            공지사항 등록 시 가입된 모든 회원의 이메일로 내용이 발송됩니다.
+                        </p>
+                    )}
+                </div>
+            )}
 
             {/* 에러 메시지 */}
             {error && (

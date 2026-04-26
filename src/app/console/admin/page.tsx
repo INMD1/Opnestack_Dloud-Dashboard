@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, Edit, Bell, AlertTriangle, Calendar, Mail, ShieldCheck } from 'lucide-react';
+import { Plus, Trash2, Edit, Bell, AlertTriangle, Calendar, Mail, ShieldCheck, Settings } from 'lucide-react';
 import AnnouncementForm from '@/components/announcements/AnnouncementForm';
+import SystemSettings from '@/components/admin/SystemSettings';
 
 interface Announcement {
     id: number;
@@ -26,7 +27,7 @@ export default function AdminPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-    const [activeTab, setActiveTab] = useState<'announcements' | 'allowed-emails'>('announcements');
+    const [activeTab, setActiveTab] = useState<'announcements' | 'allowed-emails' | 'system-settings'>('announcements');
 
     // 공지사항 상태
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -228,7 +229,7 @@ export default function AdminPage() {
                         <ShieldCheck className="w-8 h-8 text-cyan-400" />
                         관리자 페이지
                     </h1>
-                    <p className="text-slate-400 mt-2">공지사항 및 회원가입 허용 이메일을 관리합니다.</p>
+                    <p className="text-slate-400 mt-2">시스템 설정 및 공지사항을 관리합니다.</p>
                 </div>
 
                 {/* 탭 */}
@@ -254,6 +255,17 @@ export default function AdminPage() {
                     >
                         <Mail className="w-4 h-4" />
                         허용 이메일 관리
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('system-settings')}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-colors text-sm ${
+                            activeTab === 'system-settings'
+                                ? 'bg-cyan-600 text-white'
+                                : 'text-slate-400 hover:text-white'
+                        }`}
+                    >
+                        <Settings className="w-4 h-4" />
+                        시스템 설정
                     </button>
                 </div>
 
@@ -469,6 +481,11 @@ export default function AdminPage() {
                             )}
                         </div>
                     </>
+                )}
+
+                {/* 시스템 설정 탭 */}
+                {activeTab === 'system-settings' && (
+                    <SystemSettings />
                 )}
             </div>
         </div>

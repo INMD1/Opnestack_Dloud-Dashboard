@@ -47,6 +47,15 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
+
+        // 외부 포트 검증 (1~1000)
+        if (body.proxy_external_port !== null && body.proxy_external_port !== undefined) {
+            const port = parseInt(body.proxy_external_port);
+            if (isNaN(port) || port < 1 || port > 1000) {
+                return new NextResponse(JSON.stringify({ message: "외부 포트는 1에서 1000 사이여야 합니다." }), { status: 400 });
+            }
+        }
+
         const skylineClient = getSkylineClient(session.keystone_token);
         const { data, error } = await (skylineClient as any).POST("/api/v1/portforward", {
             body: body
