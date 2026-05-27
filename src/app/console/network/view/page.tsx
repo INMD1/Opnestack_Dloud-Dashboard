@@ -63,6 +63,7 @@ interface FloatingIPStatus {
 interface OriginData {
     fixed_ips?: Array<{ ip_address: string }>;
     device_owner?: string;
+    network_id?: string;
 }
 
 export default function NetworkViewPage() {
@@ -225,7 +226,7 @@ export default function NetworkViewPage() {
 
         setIsDeleting(true);
         try {
-            const res = await fetch(`/api/v1/portforward/${deletingPortForward.rule_id}`, {
+            const res = await fetch(`/api/v1/portforward/${deletingPortForward.rule_id}?vm_id=${deletingPortForward.user_vm_id}`, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
@@ -469,10 +470,27 @@ export default function NetworkViewPage() {
                 <Card className="w-1/2">
                     <CardHeader>
                         <CardTitle>포트 포워딩 규칙</CardTitle>
-                        <CardDescription>외부 포트와 인스턴스 내부 포트를 연결하는 규칙입니다.</CardDescription>
+                        <CardDescription>
+                            {ips.length > 0
+                                ? "내 IP 주소에 연결된 포트 포워딩 규칙입니다."
+                                : "외부 포트와 인스턴스 내부 포트를 연결하는 규칙입니다."}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent className="px-5">
-                        <PortForwardTable portForwards={portForwards} loading={loading} onDelete={openDeleteDialog} />
+                        <PortForwardTable
+                            portForwards={
+                                ips.length > 0
+                                    ? portForwards.filter(pf => {
+                                          const userInternalIps = new Set(
+                                              ips.map(ip => (ip.origin_data as OriginData)?.fixed_ips?.[0]?.ip_address).filter(Boolean)
+                                          );
+                                          return userInternalIps.has(pf.user_vm_internal_ip);
+                                      })
+                                    : portForwards
+                            }
+                            loading={loading}
+                            onDelete={openDeleteDialog}
+                        />
                     </CardContent>
                 </Card>
             </div>

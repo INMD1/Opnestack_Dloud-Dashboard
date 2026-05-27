@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, Edit, Bell, AlertTriangle, Calendar, Mail, ShieldCheck, Settings } from 'lucide-react';
+import { Plus, Trash2, Edit, Bell, AlertTriangle, Calendar, Mail, ShieldCheck, Settings, Network } from 'lucide-react';
 import AnnouncementForm from '@/components/announcements/AnnouncementForm';
 import SystemSettings from '@/components/admin/SystemSettings';
 
@@ -27,13 +27,31 @@ export default function AdminPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-    const [activeTab, setActiveTab] = useState<'announcements' | 'allowed-emails' | 'system-settings'>('announcements');
+    const [activeTab, setActiveTab] = useState<'announcements' | 'allowed-emails' | 'system-settings' | 'portforward'>('announcements');
 
     // 공지사항 상태
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
+
+    // 포트포워딩 상태 (관리자용)
+    interface AdminPortForward {
+        id: number;
+        rule_id: string;
+        rule_name: string;
+        user_vm_id: string;
+        user_vm_name: string;
+        user_vm_internal_ip: string;
+        user_vm_internal_port: number;
+        proxy_external_ip: string;
+        proxy_external_port: number;
+        protocol: string;
+        status: string;
+    }
+    const [portForwards, setPortForwards] = useState<AdminPortForward[]>([]);
+    const [pfLoading, setPfLoading] = useState(false);
+    const [pfDeleting, setPfDeleting] = useState<string | null>(null);
 
     // 허용 이메일 상태
     const [allowedEmails, setAllowedEmails] = useState<AllowedEmail[]>([]);
@@ -63,6 +81,7 @@ export default function AdminPage() {
             if (data.isAdmin) {
                 fetchAnnouncements();
                 fetchAllowedEmails();
+                fetchPortForwards();
             }
         } catch (error) {
             console.error('Admin check failed:', error);
@@ -81,6 +100,40 @@ export default function AdminPage() {
             }
         } catch (error) {
             console.error('Failed to fetch announcements:', error);
+        }
+    };
+
+    const fetchPortForwards = async () => {
+        setPfLoading(true);
+        try {
+            const res = await fetch('/api/v1/admin/portforward');
+            if (res.ok) {
+                const data = await res.json();
+                setPortForwards(Array.isArray(data) ? data : []);
+            }
+        } catch (error) {
+            console.error('Failed to fetch portforwards:', error);
+        } finally {
+            setPfLoading(false);
+        }
+    };
+
+    const handleDeletePortForward = async (ruleId: string, externalPort: number) => {
+        if (!confirm(`외부 포트 ${externalPort}의 포트포워딩 규칙을 삭제하시겠습니까?`)) return;
+        setPfDeleting(ruleId);
+        try {
+            const res = await fetch(`/api/v1/admin/portforward/${ruleId}`, { method: 'DELETE' });
+            if (res.ok || res.status === 204) {
+                fetchPortForwards();
+            } else {
+                const data = await res.json();
+                alert(data.message || '삭제에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Delete portforward failed:', error);
+            alert('삭제 중 오류가 발생했습니다.');
+        } finally {
+            setPfDeleting(null);
         }
     };
 
@@ -266,6 +319,17 @@ export default function AdminPage() {
                     >
                         <Settings className="w-4 h-4" />
                         시스템 설정
+                    </button>
+                    <button
+                        onClick={() => { setActiveTab('portforward'); fetchPortForwards(); }}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-colors text-sm ${
+                            activeTab === 'portforward'
+                                ? 'bg-cyan-600 text-white'
+                                : 'text-slate-400 hover:text-white'
+                        }`}
+                    >
+                        <Network className="w-4 h-4" />
+                        포트포워딩 관리
                     </button>
                 </div>
 
@@ -486,6 +550,95 @@ export default function AdminPage() {
                 {/* 시스템 설정 탭 */}
                 {activeTab === 'system-settings' && (
                     <SystemSettings />
+                )}
+
+                {/* 포트포워딩 관리 탭 */}
+                {activeTab === 'portforward' && (
+                    <>
+                        <div className="flex items-center justify-between mb-6">
+                            <p className="text-slate-400 text-sm">
+                                전체 사용자의 포트포워딩 규칙을 조회하고 삭제할 수 있습니다.
+                            </p>
+                            <button
+                                onClick={fetchPortForwards}
+                                disabled={pfLoading}
+                                className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors text-sm disabled:opacity-50"
+                            >
+                                {pfLoading ? '새로고침 중...' : '새로고침'}
+                            </button>
+                        </div>
+
+                        <div className="bg-[#0F1117] border border-slate-800 rounded-xl overflow-hidden">
+                            <div className="p-4 border-b border-slate-800 bg-slate-900/50">
+                                <h2 className="font-semibold text-slate-200">
+                                    전체 포트포워딩 규칙 ({portForwards.length})
+                                </h2>
+                            </div>
+
+                            {pfLoading ? (
+                                <div className="p-12 flex justify-center">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400" />
+                                </div>
+                            ) : portForwards.length === 0 ? (
+                                <div className="p-12 text-center text-slate-500">
+                                    <Network className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                                    <p>등록된 포트포워딩 규칙이 없습니다.</p>
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="border-b border-slate-800 text-slate-400">
+                                                <th className="text-left px-5 py-3 font-medium">VM 이름</th>
+                                                <th className="text-left px-5 py-3 font-medium">내부 IP</th>
+                                                <th className="text-left px-5 py-3 font-medium">내부 포트</th>
+                                                <th className="text-left px-5 py-3 font-medium">외부 IP</th>
+                                                <th className="text-left px-5 py-3 font-medium">외부 포트</th>
+                                                <th className="text-left px-5 py-3 font-medium">프로토콜</th>
+                                                <th className="text-left px-5 py-3 font-medium">상태</th>
+                                                <th className="text-right px-5 py-3 font-medium">작업</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-800">
+                                            {portForwards.map((pf) => (
+                                                <tr key={pf.rule_id} className="hover:bg-slate-900/30 transition-colors">
+                                                    <td className="px-5 py-3 text-white font-medium">{pf.user_vm_name}</td>
+                                                    <td className="px-5 py-3 font-mono text-slate-300">{pf.user_vm_internal_ip}</td>
+                                                    <td className="px-5 py-3 text-slate-300">{pf.user_vm_internal_port}</td>
+                                                    <td className="px-5 py-3 font-mono text-slate-300">{pf.proxy_external_ip}</td>
+                                                    <td className="px-5 py-3 text-slate-300">{pf.proxy_external_port}</td>
+                                                    <td className="px-5 py-3 text-slate-300 uppercase">{pf.protocol}</td>
+                                                    <td className="px-5 py-3">
+                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                                            pf.status === 'active'
+                                                                ? 'bg-green-900/50 text-green-400'
+                                                                : 'bg-yellow-900/50 text-yellow-400'
+                                                        }`}>
+                                                            {pf.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-5 py-3 text-right">
+                                                        <button
+                                                            onClick={() => handleDeletePortForward(pf.rule_id, pf.proxy_external_port)}
+                                                            disabled={pfDeleting === pf.rule_id}
+                                                            className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-50"
+                                                            title="삭제"
+                                                        >
+                                                            {pfDeleting === pf.rule_id ? (
+                                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-400" />
+                                                            ) : (
+                                                                <Trash2 className="w-4 h-4" />
+                                                            )}
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    </>
                 )}
             </div>
         </div>

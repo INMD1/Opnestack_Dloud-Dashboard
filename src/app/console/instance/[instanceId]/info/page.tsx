@@ -241,10 +241,10 @@ export default function InstanceInfoPage() {
 
         if (externalPort) {
             const portNum = parseInt(externalPort);
-            if (isNaN(portNum) || portNum < 1 || portNum > 1000) {
+            if (isNaN(portNum) || portNum < 1 || portNum > 65535) {
                 toaster.create({
                     title: "오류",
-                    description: "외부 포트는 1에서 1000 사이의 숫자여야 합니다.",
+                    description: "외부 포트는 유효한 포트 번호여야 합니다.",
                     type: "error",
                 });
                 return;
@@ -319,7 +319,7 @@ export default function InstanceInfoPage() {
         }
 
         try {
-            const res = await fetch(`/api/v1/portforward/${pf.rule_id}`, {
+            const res = await fetch(`/api/v1/portforward/${pf.rule_id}?vm_id=${instanceId}`, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
@@ -350,7 +350,12 @@ export default function InstanceInfoPage() {
     }
 
     function handleDeleteClick(_instance: Instance | null) {
-        throw new Error("Function not implemented.");
+        // TODO: 인스턴스 삭제 기능 구현 예정
+        toaster.create({
+            title: "알림",
+            description: "인스턴스 삭제 기능은 현재 준비 중입니다.",
+            type: "info",
+        });
     }
 
     return (
@@ -508,7 +513,7 @@ export default function InstanceInfoPage() {
                                                         <Input
                                                             id="external-port"
                                                             type="number"
-                                                            placeholder="1~1000 (비워두면 자동 할당)"
+                                                            placeholder="비워두면 자동 할당"
                                                             value={externalPort}
                                                             onChange={(e) => setExternalPort(e.target.value)}
                                                         />
