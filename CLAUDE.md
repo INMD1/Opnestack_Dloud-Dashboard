@@ -67,8 +67,24 @@ if (!session?.keystone_token) {
     return new NextResponse(JSON.stringify({ message: "Unauthorized" }), { status: 401 });
 }
 const skylineClient = getSkylineClient(session.keystone_token);
-const { data, error } = await (skylineClient as any).GET("/api/v1/...", {});
+// 타입에 정의된 경로는 직접 호출
+const { data, error } = await skylineClient.GET("/api/v1/extension/servers", {});
+// 타입에 없는 커스텀 엔드포인트는 asUntypedClient 어댑터 사용 (portforward GET 등)
 ```
+
+### Skyline 커스텀 엔드포인트 타입 처리
+`skyline-api.ts`에 정의되지 않은 Skyline 커스텀 엔드포인트 호출 시 `asUntypedClient` 어댑터를 사용:
+```ts
+function asUntypedClient(client: ReturnType<typeof getSkylineClient>) {
+    return client as unknown as {
+        GET: (path: string, opts?: { params?: { query?: Record<string, string | undefined> } }) => Promise<{ data?: unknown; error?: unknown }>;
+        POST: (path: string, opts?: { body?: unknown }) => Promise<{ data?: unknown; error?: unknown }>;
+    };
+}
+// 사용 예: /api/v1/portforward (GET), /api/v1/instances/{id} (GET)
+```
+- `any` 대신 `unknown` 경유 캐스팅(`as unknown as ...`)으로 타입 안전성 향상
+- 커스텀 엔드포인트 결과는 로컬 인터페이스로 별도 정의
 
 ### 인스턴스 목록 조회
 - **전체 목록**: `GET /api/v1/extension/servers` → `data.servers[]`
@@ -79,8 +95,10 @@ const { data, error } = await (skylineClient as any).GET("/api/v1/...", {});
   - `instance.addresses["private-net"][0].addr` — 내부 IP
 
 ### 포트포워딩 보안 필터링 (중요)
-- `GET /api/v1/portforward` 는 서버 라우트에서 **현재 사용자 VM 목록을 먼저 조회**하여
+- `GET /api/v1/portforward` 는 BFF에서 **현재 사용자 VM 목록을 먼저 조회** 후
   `user_vm_id` 또는 `user_vm_internal_ip` 기준으로 필터링 후 반환
+- **보안 원칙**: VM 목록 조회 실패 시 빈 배열 반환 (fail-closed) — 전체 노출 없음
+- 프론트엔드는 BFF 응답을 그대로 표시 (클라이언트 측 재필터링 금지)
 - `DELETE /api/v1/portforward/[rule_id]` 는 VM 소유권 + 규칙 소유권 이중 검증 수행
 - `GET /api/v1/portforward/vm/[vm_id]` 는 VM 소유권 확인 후 조회
 
@@ -123,7 +141,9 @@ npm run db:studio
 
 ## 알려진 설계 결정
 
-1. **포트포워딩 소유권 필터**: 백엔드가 전체 규칙을 반환하므로, BFF 계층(`/api/v1/portforward/route.ts`)에서 `extension/servers`를 호출해 현재 사용자 VM ID·IP를 추출하고 클라이언트-사이드에 노출되지 않도록 서버에서 필터링.
-2. **GlobalAuthGuard**: 401 응답을 인터셉트해 로그인 페이지로 리다이렉트 (`b79e88a` 커밋).
-3. **라이프사이클 관리**: 인스턴스 만료일 관리 + 이메일 연장 인증 (`8f0c8ab` 커밋).
-4. **테마**: 라이트/다크 모드 완전 지원 (`cecff70` 커밋).
+1. **포트포워딩 소유권 필터**: Skyline이 전체 규칙을 반환하므로, BFF(`/api/v1/portforward/route.ts`)에서 `extension/servers`로 현재 사용자 VM ID·IP를 추출해 필터링. VM 조회 실패 시 빈 배열 반환(fail-closed). 프론트는 BFF 결과를 그대로 렌더링.
+2. **Skyline 커스텀 엔드포인트**: `/api/v1/portforward` GET·POST, `/api/v1/instances/{id}` GET 등은 자동 생성 타입에 없음. `asUntypedClient` 어댑터(`as unknown as {...}`)로 `any` 없이 호출.
+3. **인스턴스 addresses 타입**: `Record<string, Array<{ addr: string; "OS-EXT-IPS:type"?: string }>>` 로 정의.
+4. **GlobalAuthGuard**: 401 응답을 인터셉트해 로그인 페이지로 리다이렉트.
+5. **라이프사이클 관리**: 인스턴스 만료일 관리 + 이메일 연장 인증.
+6. **테마**: 라이트/다크 모드 완전 지원.

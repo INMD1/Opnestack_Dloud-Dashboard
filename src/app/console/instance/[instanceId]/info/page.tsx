@@ -34,6 +34,11 @@ import { LifecycleStatus } from "@/types/lifecycle";
 import { LifecycleBadge } from "@/components/instance/lifecycle-badge";
 import { ExtendButton } from "@/components/instance/extend-button";
 
+interface AddressEntry {
+    addr: string;
+    "OS-EXT-IPS:type"?: string;
+}
+
 interface Instance {
     created: string;
     status: string;
@@ -41,8 +46,7 @@ interface Instance {
     id: string;
     name: string;
     port_forwardings?: PortForwarding[];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    addresses?: any;
+    addresses?: Record<string, AddressEntry[]>;
     os_name?: string;
     default_user?: string;
     default_password?: string;
@@ -98,19 +102,20 @@ export default function InstanceInfoPage() {
             const data = await res.json();
             setInstance(data);
             console.log(data);
-            // Internal IP 추출
-            if (data.addresses["private-net"][0].addr && data.addresses["private-net"][0].addr.length > 0) {
-                setInternalIp(data.addresses["private-net"][0].addr);
-            } else if (data.addresses) {
-                // addresses에서 첫 번째 fixed IP 추출
-                const networks = Object.values(data.addresses);
-                if (networks.length > 0) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const fixedIp = (networks[0] as any[]).find((addr: any) => addr["OS-EXT-IPS:type"] === "fixed");
-                    if (fixedIp) {
-                        setInternalIp(fixedIp.addr);
+            // Internal IP 추출: 네트워크 이름에 관계없이 fixed 타입 IP를 탐색
+            const extractIp = (addresses: Record<string, AddressEntry[]>): string => {
+                for (const network of Object.values(addresses)) {
+                    for (const addr of network) {
+                        const ip = addr.addr;
+                        const type = addr["OS-EXT-IPS:type"] ?? "fixed";
+                        if (type === "fixed" && ip && ip !== "0.0.0.0") return ip;
                     }
                 }
+                return "";
+            };
+            const extractedIp = extractIp(data.addresses);
+            if (extractedIp) {
+                setInternalIp(extractedIp);
             }
 
         } catch (error) {
@@ -563,7 +568,7 @@ export default function InstanceInfoPage() {
                         ) : instance ? (
                             <div className="space-y-2">
                                 <p className="text-lg"><strong>이름: </strong>{instance.name}</p>
-                                <p className="text-lg"><strong>내부 IP: </strong>{instance.addresses["private-net"][0].addr}</p>
+                                <p className="text-lg"><strong>내부 IP: </strong>{internalIp || "N/A"}</p>
                                 <p className="text-lg"><strong>상태: </strong>{instance.status}</p>
                                 <p className="text-lg"><strong>생성일: </strong>{instance.created}</p>
                                 <p className="text-lg"><strong>OS: </strong>{instance.os_name || "Unknown"}</p>

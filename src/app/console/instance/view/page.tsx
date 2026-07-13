@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 "use client"
 
 import { useState, useEffect } from "react";
@@ -282,7 +281,10 @@ export default function InstanceViewPage() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell>{instance.flavor}</TableCell>
-                                        <TableCell>{String(instance.fixed_addresses?.[0] ?? "")}</TableCell>
+                                        <TableCell>{
+                                            (instance.fixed_addresses as string[] | null | undefined)
+                                                ?.find((ip: string) => ip && ip !== "0.0.0.0") ?? ""
+                                        }</TableCell>
                                         <TableCell>{new Date(instance.created_at as string).toLocaleDateString()}</TableCell>
                                         <TableCell className="text-right">
                                             <DropdownMenu>

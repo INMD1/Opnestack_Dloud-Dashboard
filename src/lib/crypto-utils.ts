@@ -40,3 +40,11 @@ export function decryptText(encryptedData: string): string {
     decipher.setAuthTag(authTag);
     return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString('utf8');
 }
+
+/**
+ * 인증 토큰은 원문을 DB에 저장하지 않는다. DB가 노출되더라도 이메일의
+ * 원본 토큰 없이는 인증을 완료할 수 있도록 단방향 해시만 보관한다.
+ */
+export function hashVerificationToken(token: string): string {
+    return createHash('sha256').update(token, 'utf8').digest('hex');
+}

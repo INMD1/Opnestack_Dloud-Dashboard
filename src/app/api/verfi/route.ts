@@ -4,7 +4,7 @@ import { randomBytes } from "crypto";
 import { verifiactionToken, pendingUsers, allowedEmails } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { sendVerificationEmail } from "@/lib/email";
-import { encryptText } from "@/lib/crypto-utils";
+import { encryptText, hashVerificationToken } from "@/lib/crypto-utils";
 
 // 입력값 최대 길이 제한
 const MAX_EMAIL_LENGTH = 254;
@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
 
         // 보안 강화: 예측 불가능한 랜덤 토큰 생성 (이전의 SHA256(email+...) 방식 대체)
         const token = randomBytes(32).toString('hex');
+        const tokenHash = hashVerificationToken(token);
 
         // 비밀번호 암호화 저장 (평문 저장 취약점 패치)
         const encryptedPassword = encryptText(password);
@@ -92,7 +93,7 @@ export async function POST(req: NextRequest) {
         await db.insert(verifiactionToken).values({
             user_id: student_id,
             email: email,
-            token: token,
+            token: tokenHash,
             created_at: new Date(),
         });
 
@@ -103,7 +104,7 @@ export async function POST(req: NextRequest) {
             name: name,
             email: email,
             student_id: student_id,
-            token: token,
+            token: tokenHash,
             created_at: new Date(),
         });
 
@@ -121,8 +122,8 @@ export async function POST(req: NextRequest) {
         } catch (_error) {
             console.error("Email send failed:", _error);
             // 이메일 전송 실패 시 저장된 토큰과 임시 사용자 정보 삭제
-            await db.delete(verifiactionToken).where(eq(verifiactionToken.token, token));
-            await db.delete(pendingUsers).where(eq(pendingUsers.token, token));
+            await db.delete(verifiactionToken).where(eq(verifiactionToken.token, tokenHash));
+            await db.delete(pendingUsers).where(eq(pendingUsers.token, tokenHash));
             return NextResponse.json({ error: "이메일 전송에 실패했습니다." }, { status: 500 });
         }
     } catch (error) {

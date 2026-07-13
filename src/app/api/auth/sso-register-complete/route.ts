@@ -5,9 +5,14 @@ import { eq } from "drizzle-orm";
 
 export async function POST(req: NextRequest) {
     try {
-        const { keystone_token, user_id, email, student_id } = await req.json();
+        const { keystone_token, student_id } = await req.json();
 
-        if (!keystone_token || !user_id || !email || !student_id) {
+        if (
+            typeof keystone_token !== "string" ||
+            typeof student_id !== "string" ||
+            student_id.length < 1 ||
+            student_id.length > 20
+        ) {
             return NextResponse.json(
                 { error: "필수 정보가 없습니다." },
                 { status: 400 }
@@ -27,11 +32,27 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        const profile = await profileRes.json();
+        const verifiedUserId = profile?.user?.id;
+        const verifiedEmail = profile?.user?.email;
+
+        if (
+            typeof verifiedUserId !== "string" ||
+            !verifiedUserId ||
+            typeof verifiedEmail !== "string" ||
+            !verifiedEmail
+        ) {
+            return NextResponse.json(
+                { error: "인증된 사용자 정보를 확인할 수 없습니다." },
+                { status: 401 }
+            );
+        }
+
         // 이미 등록된 사용자 확인
         const existing = await db
             .select()
             .from(Student_accept)
-            .where(eq(Student_accept.user_id, user_id))
+            .where(eq(Student_accept.user_id, verifiedUserId))
             .limit(1);
 
         if (existing.length > 0) {
@@ -39,8 +60,8 @@ export async function POST(req: NextRequest) {
         }
 
         await db.insert(Student_accept).values({
-            user_id,
-            email,
+            user_id: verifiedUserId,
+            email: verifiedEmail.toLowerCase(),
             acceptance: 1,
             created_at: new Date(),
         });

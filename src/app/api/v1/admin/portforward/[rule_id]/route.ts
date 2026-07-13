@@ -32,7 +32,7 @@ export async function DELETE(
         const { rule_id } = await params;
         const skylineClient = getSkylineClient(session.keystone_token);
 
-        const { error } = await (skylineClient as any).DELETE(`/api/v1/portforward/${rule_id}`);
+        const { error } = await (skylineClient as any).DELETE(`/api/v1/portforward/${encodeURIComponent(rule_id)}`);
 
         if (error) {
             logger.devError("Admin portforward DELETE error:", error);

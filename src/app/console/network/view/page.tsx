@@ -66,6 +66,8 @@ interface OriginData {
     network_id?: string;
 }
 
+// 포트포워딩 백엔드 응답 타입 (BFF에서 이미 현재 사용자 VM 기준으로 필터링됨)
+
 export default function NetworkViewPage() {
     const [ips, setIps] = useState<components["schemas"]["PortsResponseBase"][]>([]);
     const [portForwards, setPortForwards] = useState<PortForward[]>([]);
@@ -101,7 +103,7 @@ export default function NetworkViewPage() {
                 if (data && data.servers) {
                     setInstances(data.servers);
                 }
-                setInstancesName(data.servers.map((data: { name: string; }) => data.name));
+                setInstancesName(data.servers.map((s: { name: string }) => s.name));
             } catch (error) {
                 console.error(error);
             }
@@ -258,10 +260,14 @@ export default function NetworkViewPage() {
     const handleInstanceSelect = (instanceName: string) => {
         setSelectedInstanceName(instanceName);
         const selectedInstance = instances.find(inst => inst.name === instanceName);
-        if (selectedInstance && selectedInstance.fixed_addresses && selectedInstance.fixed_addresses.length > 0) {
-            // fixed_addresses는 배열이므로 첫 번째 IP를 사용
-            const firstIp = selectedInstance.fixed_addresses[0] as string;
-            setInternalIp(firstIp);
+        if (selectedInstance && Array.isArray(selectedInstance.fixed_addresses)) {
+            // fixed_addresses 배열에서 유효한 IP 탐색 (0.0.0.0 제외)
+            const validIp = (selectedInstance.fixed_addresses as string[]).find(
+                (ip) => typeof ip === "string" && ip.length > 0 && ip !== "0.0.0.0"
+            );
+            setInternalIp(validIp ?? "");
+        } else {
+            setInternalIp("");
         }
     };
 
@@ -478,16 +484,7 @@ export default function NetworkViewPage() {
                     </CardHeader>
                     <CardContent className="px-5">
                         <PortForwardTable
-                            portForwards={
-                                ips.length > 0
-                                    ? portForwards.filter(pf => {
-                                          const userInternalIps = new Set(
-                                              ips.map(ip => (ip.origin_data as OriginData)?.fixed_ips?.[0]?.ip_address).filter(Boolean)
-                                          );
-                                          return userInternalIps.has(pf.user_vm_internal_ip);
-                                      })
-                                    : portForwards
-                            }
+                            portForwards={portForwards}
                             loading={loading}
                             onDelete={openDeleteDialog}
                         />

@@ -27,7 +27,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ r
         const skylineClient = getSkylineClient(session.keystone_token);
 
         // 1차 검증: 요청한 VM이 현재 세션 사용자 소유인지 확인
-        const { error: instanceError } = await (skylineClient as any).GET(`/api/v1/instances/${vm_id}`, {});
+        const { error: instanceError } = await (skylineClient as any).GET(`/api/v1/instances/${encodeURIComponent(vm_id)}`, {});
         if (instanceError) {
             logger.devError("Ownership verification failed for vm_id:", vm_id, instanceError);
             return new NextResponse(
@@ -37,7 +37,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ r
         }
 
         // 2차 검증: 삭제하려는 rule_id가 해당 VM에 속한 규칙인지 확인
-        const { data: pfList, error: pfListError } = await (skylineClient as any).GET(`/api/v1/portforward/vm/${vm_id}`);
+        const { data: pfList, error: pfListError } = await (skylineClient as any).GET(`/api/v1/portforward/vm/${encodeURIComponent(vm_id)}`);
         if (pfListError || !Array.isArray(pfList)) {
             logger.devError("Failed to fetch port forwarding list for ownership check:", pfListError);
             return new NextResponse(
@@ -56,7 +56,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ r
         }
 
         // 소유권 이중 확인 완료 후 삭제 실행
-        const { error } = await (skylineClient as any).DELETE(`/api/v1/portforward/${rule_id}`);
+        const { error } = await (skylineClient as any).DELETE(`/api/v1/portforward/${encodeURIComponent(rule_id)}`);
 
         if (error) {
             logger.devError("Backend error:", error);

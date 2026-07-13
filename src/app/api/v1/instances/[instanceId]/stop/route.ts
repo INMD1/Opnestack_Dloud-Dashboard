@@ -34,7 +34,7 @@ export async function POST(
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         const { data, error, response } = await skylineClient.POST(
-            `/api/v1/instances/${instanceId}/stop`,
+            `/api/v1/instances/${encodeURIComponent(instanceId)}/stop`,
             {}
         );
 

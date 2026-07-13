@@ -1,18 +1,18 @@
 "use client";
 
-import { SidebarProvider } from "@/components/ui/sidebar"
+import { SidebarProvider, useSidebar } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signOut,  } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import AuthGuard from "../exten/AuthGuard";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, LogOut, Cpu } from "lucide-react";
+import { Loader2, LogOut, Cpu, Menu} from "lucide-react";
 import { cn } from "@/lib/utils";
 
-
-export default function Layout({ children }: { children: React.ReactNode }) {
+function LayoutContent({ children }: { children: React.ReactNode }) {
+    const { toggleSidebar } = useSidebar();
     const { data: session, status } = useSession();
     const router = useRouter();
     const [buildingInstances, setBuildingInstances] = useState<string[]>([]);
@@ -75,16 +75,27 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <SidebarProvider>
+        <>
             <AuthGuard />
             <AppSidebar />
             <div className="relative flex flex-col flex-1 w-full min-h-screen bg-background overflow-hidden transition-colors duration-300">
-                {/* Global Top Header */}
                 <header className="sticky top-0 z-40 w-full h-16 bg-background/80 backdrop-blur-xl border-b border-border px-4 sm:px-6 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="hidden sm:flex items-center gap-2 text-muted-foreground/40 text-[10px] font-black uppercase tracking-[0.2em]">
-                            <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)] animate-pulse"></span>
-                            System Operational
+                    <div>
+                        <div className="hidden sm:flex items-center gap-4">
+                            <div className="hidden sm:flex items-center gap-2 text-muted-foreground/40 text-[10px] font-black uppercase tracking-[0.2em]">
+                                <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)] animate-pulse"></span>
+                                System Operational
+                            </div>
+                        </div>
+                        <div className="flex sm:hidden items-center gap-4">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={toggleSidebar}
+                                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all gap-2 px-3 border border-border "
+                            >
+                                <Menu className="h-4 w-4" />
+                            </Button>
                         </div>
                     </div>
 
@@ -99,22 +110,38 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                                 <span className="tracking-tighter uppercase">BUILDING ({buildingInstances.length})</span>
                             </div>
                         )}
-                        
+
                         {session ? (
-                            <div className="flex items-center gap-3">
-                                <div className="hidden sm:flex flex-col items-end mr-1">
-                                    <span className="text-xs font-bold text-foreground">{session.user?.name}</span>
-                                    <span className="text-[9px] text-muted-foreground/50 font-black uppercase tracking-tighter">Verified Identity</span>
+                            <div>
+                                <div className="hidden sm:flex items-center gap-3">
+                                    <div className="hidden sm:flex flex-col items-end mr-1">
+                                        <span className="text-xs font-bold text-foreground">{session.user?.name}</span>
+                                        <span className="text-[9px] text-muted-foreground/50 font-black uppercase tracking-tighter">Verified Identity</span>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleLogout()}
+                                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all gap-2 px-3 border border-border rounded-xl"
+                                    >
+                                        <LogOut className="h-4 w-4" />
+                                        <span className="hidden sm:inline font-bold uppercase tracking-widest text-[10px]">Logout</span>
+                                    </Button>
                                 </div>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleLogout()}
-                                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all gap-2 px-3 border border-border rounded-xl"
-                                >
-                                    <LogOut className="h-4 w-4" />
-                                    <span className="hidden sm:inline font-bold uppercase tracking-widest text-[10px]">Logout</span>
-                                </Button>
+                                <div className="flex sm:hidden items-center gap-3">
+                                    <div className="hidden sm:flex flex-col items-end mr-1">
+                                        <span className="text-xs font-bold text-foreground">{session.user?.name}</span>
+                                        <span className="text-[9px] text-muted-foreground/50 font-black uppercase tracking-tighter">Verified Identity</span>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleLogout()}
+                                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all gap-2 px-3 border border-border rounded-xl"
+                                    >
+                                        <LogOut className="h-4 w-4" />
+                                    </Button>
+                                </div>
                             </div>
                         ) : (
                             <Link href="/auth/login">
@@ -126,11 +153,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     </div>
                 </header>
 
-                {/* Main Content Area */}
                 <main className="flex-1 overflow-y-auto">
                     {children}
                 </main>
             </div>
+        </>
+    );
+}
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+    return (
+        <SidebarProvider>
+            <LayoutContent>{children}</LayoutContent>
         </SidebarProvider>
-    )
+    );
 }

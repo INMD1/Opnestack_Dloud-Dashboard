@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
    
         if (!current_password || !new_password) {
             return new NextResponse(
-                JSON.stringify({ message: "현재 비밀번호와 새 비밀번호를 입력해주세요.", body }),
+                JSON.stringify({ message: "현재 비밀번호와 새 비밀번호를 입력해주세요." }),
                 { status: 400 }
             );
         }
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
                     const searchData = await searchRes.json();
                     if (searchData.results?.length > 0) {
                         const authentikUserId = searchData.results[0].pk;
-                        await fetch(`${authentikUrl}/api/v3/core/users/${authentikUserId}/set_password/`, {
+                        await fetch(`${authentikUrl}/api/v3/core/users/${encodeURIComponent(String(authentikUserId))}/set_password/`, {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",

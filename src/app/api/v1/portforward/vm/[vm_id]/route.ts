@@ -17,7 +17,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ vm_i
 
         // 보안 검증: 요청한 VM이 현재 세션 사용자 소유인지 확인
         // 사용자의 토큰으로 해당 인스턴스를 조회했을 때 성공하면 소유자임을 의미
-        const { error: instanceError } = await (skylineClient as any).GET(`/api/v1/instances/${vm_id}`, {});
+        const { error: instanceError } = await (skylineClient as any).GET(`/api/v1/instances/${encodeURIComponent(vm_id)}`, {});
         if (instanceError) {
             logger.devError("Ownership verification failed for vm_id:", vm_id, instanceError);
             return new NextResponse(
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ vm_i
         }
 
         // 소유권 확인 후 포트포워딩 목록 조회
-        const { data, error } = await (skylineClient as any).GET(`/api/v1/portforward/vm/${vm_id}`);
+        const { data, error } = await (skylineClient as any).GET(`/api/v1/portforward/vm/${encodeURIComponent(vm_id)}`);
 
         if (error) {
             logger.devError("Backend error:", error);

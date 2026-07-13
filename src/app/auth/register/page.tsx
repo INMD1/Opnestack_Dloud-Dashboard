@@ -122,9 +122,9 @@ export default function RegisterPage() {
                                     name="username"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>사용자 이름</FormLabel>
+                                            <FormLabel>유저 이름</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="사용자 이름을 입력하세요" {...field} />
+                                                <Input placeholder="유저 이름을 입력하세요(ID로 사용됨니다)" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -219,22 +219,6 @@ export default function RegisterPage() {
                                 >
                                     {isLoading ? "처리 중..." : "일반 회원가입"}
                                 </Button>
-
-                                {ssoEnabled && (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        className="w-full"
-                                        onClick={() => {
-                                            localStorage.setItem("sso_intent", "register");
-                                            window.location.href = ssoUrl;
-                                        }}
-                                    >
-                                        Authentik으로 회원가입 (SSO)
-                                    </Button>
-                                )}
-
-                                <p className="text-xs text-muted-foreground mt-2">*회원가입이 되면 자동으로 <a href="/privacy-policy" className="text-primary">개인정보처리방침</a>과 <a href="/TermsofUse" className="text-primary">서비스 이용약관</a>에 동의한걸로 처리됩니다.</p>
 
                                 {ssoEnabled && (
                                     <Button

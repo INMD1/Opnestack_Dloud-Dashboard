@@ -27,7 +27,7 @@ export async function POST(
       return jsonResponse({ message: "Unauthorized" }, 401);
     }
 
-    const res = await fetch(`${process.env.SKYLINE_API_URL}/api/v1/instances/${instanceId}/extend`, {
+    const res = await fetch(`${process.env.SKYLINE_API_URL}/api/v1/instances/${encodeURIComponent(instanceId)}/extend`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

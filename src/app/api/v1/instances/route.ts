@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
         }
 
         const skylineClient = getSkylineClient(session.keystone_token);
-        const { data, error } = await skylineClient.GET(`/api/v1/instances/${instance_id}`, {});
+        const { data, error } = await skylineClient.GET(`/api/v1/instances/${encodeURIComponent(instance_id)}`, {});
 
         if (error) {
             return new NextResponse(JSON.stringify(error), { status: 500 });
@@ -82,7 +82,7 @@ export async function DELETE(req: NextRequest) {
         const skylineClient = getSkylineClient(session.keystone_token);
 
         const { data, error, response } = await skylineClient.DELETE(
-            `/api/v1/instances/${instance_id}`,
+            `/api/v1/instances/${encodeURIComponent(instance_id)}`,
             {}
         );
 

@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
         const skylineClient = getSkylineClient(session.keystone_token);
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const { data, error } = await skylineClient.POST(`/api/v1/volumes/${volume_id}/detach`, {
+        const { data, error } = await skylineClient.POST(`/api/v1/volumes/${encodeURIComponent(volume_id)}/detach`, {
             body: { server_id }
         });
 

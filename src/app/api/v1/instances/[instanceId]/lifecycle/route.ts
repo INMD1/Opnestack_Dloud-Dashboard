@@ -28,7 +28,7 @@ export async function GET(
     }
 
     // skylineClient를 사용하지 않고 직접 fetch (타입 이슈 방지)
-    const res = await fetch(`${process.env.SKYLINE_API_URL}/api/v1/instances/${instanceId}/lifecycle`, {
+    const res = await fetch(`${process.env.SKYLINE_API_URL}/api/v1/instances/${encodeURIComponent(instanceId)}/lifecycle`, {
       headers: {
         "Content-Type": "application/json",
         "Authorization": session.keystone_token,

@@ -27,7 +27,7 @@ export async function DELETE(req: NextRequest) {
         const skylineClient = getSkylineClient(session.keystone_token);
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const { error } = await skylineClient.DELETE(`/api/v1/volumes/${volumeName}`);
+        const { error } = await skylineClient.DELETE(`/api/v1/volumes/${encodeURIComponent(volumeName)}`);
 
         if (error) {
             return jsonResponse({ message: "Volume deletion failed" }, 500);

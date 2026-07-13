@@ -66,7 +66,7 @@ export async function DELETE(req: NextRequest) {
 
 
   try {
-    const res = await fetch(`${process.env.SKYLINE_API_URL}/api/v1/keypairs/${name}`, {
+    const res = await fetch(`${process.env.SKYLINE_API_URL}/api/v1/keypairs/${encodeURIComponent(name)}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
