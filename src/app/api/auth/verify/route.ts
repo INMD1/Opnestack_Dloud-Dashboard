@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { verifiactionToken, Student_accept, pendingUsers } from "@/db/schema";
+import {
+    verifiactionToken,
+    Student_accept,
+    pendingUsers,
+    allowedEmails,
+} from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { decryptText, hashVerificationToken } from "@/lib/crypto-utils";
 
@@ -106,6 +111,41 @@ export async function POST(req: NextRequest) {
         }
 
         const userInfo = pendingUserRecord[0];
+        const normalizedEmail = userInfo.email.toLowerCase();
+        const isSchoolEmail = normalizedEmail.endsWith("@office.deu.ac.kr");
+
+        // 허용 목록에서 삭제된 이메일은 이미 발급된 토큰으로도 가입할 수 없게
+        // Skyline 호출 직전에 가입 자격을 다시 확인한다.
+        if (!isSchoolEmail) {
+            const allowed = await db
+                .select({ id: allowedEmails.id })
+                .from(allowedEmails)
+                .where(eq(allowedEmails.email, normalizedEmail))
+                .limit(1);
+
+            if (allowed.length === 0) {
+                await db
+                    .delete(verifiactionToken)
+                    .where(eq(verifiactionToken.token, storedToken));
+                await db
+                    .delete(pendingUsers)
+                    .where(eq(pendingUsers.token, storedToken));
+
+                return NextResponse.json(
+                    { error: "관리자가 허용한 이메일이 아닙니다." },
+                    { status: 403 }
+                );
+            }
+        }
+
+        const signupToken = process.env.SKYLINE_SIGNUP_TOKEN;
+        if (!signupToken) {
+            console.error("SKYLINE_SIGNUP_TOKEN is not configured");
+            return NextResponse.json(
+                { error: "회원가입 서버 설정이 완료되지 않았습니다." },
+                { status: 500 }
+            );
+        }
 
         // 외부 회원가입 호출 전에 토큰을 원자적으로 선점해 동시 재사용을 막는다.
         const claimedToken = await db
@@ -140,6 +180,7 @@ export async function POST(req: NextRequest) {
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-Skyline-Signup-Token': signupToken,
                 },
                 body: JSON.stringify({
                     username: userInfo.username,
@@ -155,8 +196,14 @@ export async function POST(req: NextRequest) {
             if (!signupResponse.ok) {
                 console.error("Skyline signup failed:", signupData);
                 await db.delete(pendingUsers).where(eq(pendingUsers.token, storedToken));
+                const signupErrorMessage =
+                    typeof signupData?.detail === "string"
+                        ? signupData.detail
+                        : typeof signupData?.message === "string"
+                            ? signupData.message
+                            : "회원가입 처리에 실패했습니다.";
                 return NextResponse.json(
-                    { error: signupData.message || "회원가입 처리에 실패했습니다." },
+                    { error: signupErrorMessage },
                     { status: signupResponse.status }
                 );
             }
